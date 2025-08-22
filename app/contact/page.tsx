@@ -75,6 +75,8 @@ function ContactForm() {
           "Une erreur est survenue. Merci de réessayer ou de nous écrire directement par e-mail.",
       });
       setIsSubmitting(false);
+      // Scroll vers le message d'erreur
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -119,6 +121,8 @@ function ContactForm() {
       });
     } finally {
       setIsSubmitting(false);
+      // Scroll vers le haut pour voir le message de statut
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
