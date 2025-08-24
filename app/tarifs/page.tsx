@@ -6,6 +6,14 @@ import Link from "next/link";
 import LogoIcon from "@/components/LogoIcon";
 import PricingGrid from "@/components/PricingGrid";
 
+// SEO
+export const metadata = {
+  alternates: { canonical: "/tarifs" },
+  title: "Tarifs — MemoriaBox",
+  description: "Des formules claires pour collecter facilement photos et vidéos de vos invités.",
+};
+
+
 export default function PricingPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-rosepale via-white to-beige/20">
@@ -24,28 +32,27 @@ export default function PricingPage() {
           </p>
 
           {/* Bandeau Offre de lancement */}
-<div className="mt-8 w-full">
-  <div className="mx-auto max-w-4xl rounded-2xl border border-or/30 bg-gradient-to-r from-or/10 via-beige/10 to-beige/20 p-4 sm:p-5 shadow-sm">
-    <div className="flex items-center justify-center gap-2">
-      <span className="inline-flex items-center gap-2 rounded-full bg-or/10 text-encre px-3 py-1 text-sm font-medium">
-        <span className="text-base">🎉</span>
-        Offre de lancement
-      </span>
-    </div>
-    <p className="text-encre/90 text-center mt-3">
-      <span className="font-semibold">
-        -40% sur votre premier pack
-      </span>{" "}
-      <span className="text-encre/100">
-        (réduction plafonnée à 120€ • hors options et matériel)
-      </span>
-    </p>
-    <p className="text-xs text-center text-gray-500 mt-1">
-      Non cumulable • Valable uniquement sur la première commande
-    </p>
-  </div>
-</div>
-
+          <div className="mt-8 w-full">
+            <div className="mx-auto max-w-4xl rounded-2xl border border-or/30 bg-gradient-to-r from-or/10 via-beige/10 to-beige/20 p-4 sm:p-5 shadow-sm">
+              <div className="flex items-center justify-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full bg-or/10 text-encre px-3 py-1 text-sm font-medium">
+                  <span className="text-base">🎉</span>
+                  Offre de lancement
+                </span>
+              </div>
+              <p className="text-encre/90 text-center mt-3">
+                <span className="font-semibold">
+                  -40% sur votre premier pack
+                </span>{" "}
+                <span className="text-encre/100">
+                  (réduction plafonnée à 120€ • hors options et matériel)
+                </span>
+              </p>
+              <p className="text-xs text-center text-gray-500 mt-1">
+                Non cumulable • Valable uniquement sur la première commande
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

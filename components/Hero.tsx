@@ -1,137 +1,154 @@
+// components/Hero.tsx
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { Users, Shield, ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowRight, Shield, Users } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export default function Hero() {
-  const WORDS = ["mariage", "anniversaire", "baptême", "soirée", "événement d’entreprise"];
+  // === MOTS ANIMÉS ===
+  const WORDS = ["mariage", "anniversaire", "baptême", "soirée", "événement d'entreprise"];
+  const DYNAMIC_PREFIX = "votre\u00A0"; // "votre " avec espace insécable
 
-  // machine à écrire
-  const [index, setIndex] = useState(0);
+  // === ÉTAT MACHINE À ÉCRIRE ===
+  const [i, setI] = useState(0);
   const [sub, setSub] = useState(0);
   const [del, setDel] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
-  // timings : 3s/cycle avec pause stable plus longue
-  const TOTAL_MS = 3200;
-  const PAUSE_FULL_MS = 2750; // pause lorsque le mot est complet
-  const PAUSE_EMPTY_MS = 450; // pause à vide
-  const stepMs = Math.max(
-    50,
-    Math.floor((TOTAL_MS - (PAUSE_FULL_MS + PAUSE_EMPTY_MS)) / (2 * Math.max(1, WORDS[index].length)))
-  );
+  // === CONFIG TYPEWRITER ===
+  const PAUSE_FULL_MS = 3500;
+  const PAUSE_EMPTY_MS = 400;
+  const DELETE_SPEED = 60;
+  const TYPE_SPEED_BASE = 80;
+
+  const getTypeSpeed = (char: string) => {
+    // compat ES5 / TS lib basse
+    if ([" ", "'", "d", "e"].indexOf(char) !== -1) return TYPE_SPEED_BASE + 40;
+    return TYPE_SPEED_BASE + Math.random() * 30;
+  };
 
   useEffect(() => {
-    const full = WORDS[index];
-    let t: number;
+    const full = DYNAMIC_PREFIX + WORDS[i]; // on tape "votre + mot"
+    let t: number | undefined;
 
     if (!del) {
-      if (sub < full.length) t = window.setTimeout(() => setSub((s) => s + 1), stepMs);
-      else t = window.setTimeout(() => setDel(true), PAUSE_FULL_MS);
+      setIsTyping(true);
+      if (sub < full.length) {
+        const nextChar = full[sub];
+        const speed = getTypeSpeed(nextChar);
+        t = window.setTimeout(() => setSub((s) => s + 1), speed);
+      } else {
+        setIsTyping(false);
+        t = window.setTimeout(() => setDel(true), PAUSE_FULL_MS);
+      }
     } else {
-      if (sub > 0) t = window.setTimeout(() => setSub((s) => s - 1), stepMs);
-      else
+      setIsTyping(true);
+      if (sub > 0) {
+        t = window.setTimeout(() => setSub((s) => s - 1), DELETE_SPEED);
+      } else {
+        setIsTyping(false);
         t = window.setTimeout(() => {
           setDel(false);
-          setIndex((i) => (i + 1) % WORDS.length);
+          setI((n) => (n + 1) % WORDS.length);
         }, PAUSE_EMPTY_MS);
+      }
     }
 
-    return () => clearTimeout(t);
-  }, [sub, del, index, stepMs]);
+    return () => { if (t !== undefined) clearTimeout(t); };
+  }, [sub, del, i]);
 
-  const container = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+  // === MESURES (hauteur mobile + largeur desktop) ===
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+  const measureWrapRef = useRef<HTMLSpanElement>(null);   // hauteur mobile (wrap)
+  const measureNowrapRef = useRef<HTMLSpanElement>(null); // largeur desktop (nowrap)
+  const [box, setBox] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+
+  const LONGEST_WORD = WORDS.reduce((a, b) => (a.length >= b.length ? a : b));
+  const LONGEST_DYNAMIC = DYNAMIC_PREFIX + LONGEST_WORD;
+
+  const doMeasure = () => {
+    const h1W = h1Ref.current?.getBoundingClientRect().width ?? 0;
+
+    // Hauteur mobile (wrap) – contrainte à la largeur réelle du H1
+    if (measureWrapRef.current) {
+      measureWrapRef.current.style.width = h1W ? `${h1W}px` : "auto";
+    }
+    const hRect = measureWrapRef.current?.getBoundingClientRect();
+
+    // Largeur desktop (nowrap)
+    const wRect = measureNowrapRef.current?.getBoundingClientRect();
+
+    setBox({
+      w: Math.ceil((wRect?.width ?? 0) + 4), // petite marge anti-césure
+      h: Math.ceil(hRect?.height ?? 0),
+    });
   };
-  const item = {
-    hidden: { opacity: 0, y: 16 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.2, 0.8, 0.2, 1] } },
-  };
+
+  useLayoutEffect(() => { doMeasure(); }, []);
+  useEffect(() => {
+    const onResize = () => doMeasure();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // === ANIMATIONS D'ENTRÉE ===
+  const container = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.1 } } };
+  const item = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.25, 0.8, 0.25, 1] } } };
 
   return (
-    <section
-      className="relative isolate flex items-center py-12 lg:py-20"
-      style={{ minHeight: "calc(100vh - 140px)" }}
-      aria-label="Présentation de MemoriaBox"
-    >
+    <section className="relative isolate flex items-center py-12 lg:py-20" style={{ minHeight: "calc(100vh - 140px)" }} aria-label="Présentation de MemoriaBox">
       <div className="container-max">
         <motion.div variants={container} initial="hidden" animate="visible" className="mx-auto max-w-4xl text-center">
-          {/* H1 : largeur max pour autoriser 2-3 lignes, mot animé dans le flux */}
+          {/* H1 responsive et centré */}
           <motion.h1
+            ref={h1Ref}
             variants={item}
-            className="font-title text-4xl lg:text-6xl mb-5 text-encre leading-tight mx-auto
-                       max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch]"
+            className="font-title text-4xl lg:text-6xl mb-5 text-encre leading-tight mx-auto max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch] text-center"
           >
-            Réunissez tous les souvenirs de votre{" "}
-            <span className="relative inline-flex items-baseline overflow-visible pb-[0.06em]">
-              <span className="sr-only">événement</span>
-              <span aria-hidden className="text-or">{WORDS[index].slice(0, sub)}</span>
-              <span aria-hidden className="ml-1 inline-block align-baseline caret" />
-            </span>
+            Réunissez tous les souvenirs de{" "}
+            {/* zone animée = "votre + mot" */}
+            <span
+  className="relative block mx-auto text-center whitespace-normal break-words sm:inline-flex sm:justify-center sm:whitespace-nowrap sm:break-normal sm:text-center align-baseline"
+  style={{
+    height: box.h ? `${box.h}px` : undefined,   // mobile : réserve la hauteur (wrap)
+    width:  box.w ? `${box.w}px` : undefined,   // ≥ sm : réserve la largeur (nowrap)
+    verticalAlign: "baseline",
+    maxWidth: "100%",
+  }}
+>
+  <span className="font-medium">
+    <span className="text-encre">votre&nbsp;</span>
+    <span className="text-or">
+      {WORDS[i].slice(0, sub)}
+      <span
+        aria-hidden
+        className={`inline-block align-baseline ml-1 caret-enhanced ${isTyping ? "caret-typing" : ""}`}
+      />
+    </span>
+  </span>
+</span>
+
           </motion.h1>
 
+          {/* Sous-titre (inchangé) */}
           <motion.p variants={item} className="text-lg lg:text-xl text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Photos, vidéos et messages rassemblés dans un <strong>lien privé</strong>. Accès par{" "}
-            <strong>QR ou lien</strong>, aucune application, aucun compte invité.
+            Photos, vidéos et messages rassemblés dans un <strong className="text-encre">lien privé</strong>. Accès par <strong className="text-encre">QR ou lien</strong>, aucune application, aucun compte invité.
           </motion.p>
-
-          <motion.ul variants={item} className="flex flex-wrap justify-center gap-4 mb-8" aria-label="Avantages clés">
-            <li className="flex items-center gap-2 text-sm text-gray-700">
-              <span className="text-green-600" aria-hidden>✓</span> Prêt en 72 h max
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-700">
-              <span className="text-green-600" aria-hidden>✓</span> Pas d’app à installer
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-700">
-              <span className="text-green-600" aria-hidden>✓</span> Aucun compte invité
-            </li>
-          </motion.ul>
-
-          <motion.div variants={item} className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link href="/contact" className="btn btn-primary" aria-label="Demander un accès">
-              <span className="flex items-center gap-2">
-                Demander un accès
-                <motion.span aria-hidden animate={{ x: [0, 6, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.span>
-              </span>
-            </Link>
-            <Link href="/templates" className="btn btn-outline" aria-label="Voir une page exemple">
-              Voir une page exemple
-            </Link>
-          </motion.div>
-
-          <motion.div variants={item} className="px-4 py-3 bg-white/70 rounded-xl border border-gray-100 max-w-xl mx-auto">
-            <p className="text-sm text-gray-700">Accompagnement humain et création sur-mesure. Réponse rapide selon votre date.</p>
-          </motion.div>
-
-          <motion.div variants={item} className="flex flex-wrap justify-center gap-6 mt-8 text-xs text-gray-600">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" /> <span>Confidentialité par défaut</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span aria-hidden>❤️</span> <span>Suivi personnalisé</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" /> <span>Réponse rapide</span>
-            </div>
-          </motion.div>
         </motion.div>
       </div>
 
-      <div aria-hidden className="pointer-events-none absolute top-16 left-10 w-32 h-32 bg-or/5 rounded-full blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute bottom-20 right-10 w-48 h-48 bg-beige/20 rounded-full blur-3xl" />
+      {/* Mesures invisibles */}
+      <span ref={measureWrapRef} className="absolute -z-50 pointer-events-none opacity-0 block whitespace-normal break-words font-title text-4xl lg:text-6xl leading-tight font-medium" aria-hidden>{LONGEST_DYNAMIC}</span>
+      <span ref={measureNowrapRef} className="absolute -z-50 pointer-events-none opacity-0 whitespace-nowrap font-title text-4xl lg:text-6xl leading-tight font-medium" aria-hidden>{LONGEST_DYNAMIC}</span>
 
+      {/* Styles caret */}
       <style jsx>{`
-        .caret {
-          width: 2px;
-          height: 1em;
-          background: currentColor;
-          animation: caretBlink 1s step-end infinite;
-        }
-        @keyframes caretBlink { 50% { opacity: 0; } }
+        .caret-enhanced { width: 2px; height: 1.1em; background: linear-gradient(to bottom, #d4af37, #b8941f); animation: caretBlink 1.2s step-end infinite; border-radius: 1px; box-shadow: 0 0 4px rgba(212, 175, 55, 0.3); }
+        .caret-typing { animation: caretTyping 0.8s ease-in-out infinite; box-shadow: 0 0 8px rgba(212, 175, 55, 0.5); }
+        @keyframes caretBlink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+        @keyframes caretTyping { 0%, 100% { opacity: 1; transform: scaleY(1); } 50% { opacity: 0.7; transform: scaleY(0.9); } }
       `}</style>
     </section>
   );
