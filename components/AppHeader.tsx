@@ -1,22 +1,20 @@
-// components/AppHeader.tsx
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useState } from 'react'
-import { Menu, X } from 'lucide-react'
-import LogoIcon from './LogoIcon'
+import Link from "next/link";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import LogoIcon from "./LogoIcon";
 
 export default function AppHeader() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '/', label: 'Accueil' },
-    { href: '/fonctionnalites', label: 'Fonctionnalités' },
-    { href: '/templates', label: 'Exemples' },
-    { href: '/tarifs', label: 'Tarifs' },
-    { href: '/faq', label: 'FAQ' },
-    { href: '/contact', label: 'Contact' },
-  ]
+    { href: "/", label: "Accueil" },
+    { href: "/fonctionnalites", label: "Fonctionnalités" },
+    { href: "/templates", label: "Exemples" },
+    { href: "/tarifs", label: "Tarifs" },
+    { href: "/faq", label: "FAQ" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
@@ -30,8 +28,8 @@ export default function AppHeader() {
             </span>
           </Link>
 
-          {/* Navigation desktop */}
-          <nav className="hidden md:flex items-center gap-6">
+          {/* Nav desktop (avec CTA) */}
+          <nav className="hidden lg:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -41,27 +39,27 @@ export default function AppHeader() {
                 {link.label}
               </Link>
             ))}
-          </nav>
-
-          {/* CTA desktop */}
-          <div className="hidden md:block">
-            <Link href="/contact" className="btn btn-primary text-sm">
+            <Link
+              href="/contact"
+              className="btn btn-primary text-sm px-4 py-2 shadow-sm hover:shadow-md transition whitespace-nowrap"
+            >
               Démarrer mon projet
             </Link>
-          </div>
+          </nav>
 
-          {/* Menu mobile */}
+          {/* Burger menu trigger */}
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2"
+            onClick={() => setIsMenuOpen((v) => !v)}
+            className="lg:hidden p-2"
+            aria-label="Ouvrir le menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {/* Navigation mobile */}
+        {/* Menu mobile (CTA dedans uniquement en <lg) */}
         {isMenuOpen && (
-          <nav className="md:hidden py-4 border-t">
+          <nav className="lg:hidden py-4 border-t">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -72,6 +70,8 @@ export default function AppHeader() {
                 {link.label}
               </Link>
             ))}
+
+            {/* CTA uniquement en mobile */}
             <Link
               href="/contact"
               className="btn btn-primary w-full mt-4"
@@ -83,5 +83,5 @@ export default function AppHeader() {
         )}
       </div>
     </header>
-  )
+  );
 }

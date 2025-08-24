@@ -1,170 +1,279 @@
 // components/PricingGrid.tsx
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { Check, Star } from 'lucide-react'
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
-type Plan = {
-  name: string
-  price: string                 // prix affiché (remisé si applicable)
-  duration: string
-  intro: string
-  includes: string[]
-  recommended?: boolean
-  ctaText: string
-  ctaLink: string
-  note?: string
-  originalPrice?: string        // prix barré (si promo)
-  savingText?: string           // ex: "Économie : 80 € TTC"
-  promoHint?: string            // petit texte sous le prix: "Réduction de lancement"
+/* ---------- Petit composant "tick/cross" ---------- */
+function Feature({
+  ok,
+  children,
+}: {
+  ok: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-start gap-2 text-sm text-gray-800">
+      {ok ? (
+        <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-600 shrink-0" />
+      ) : (
+        <XCircle className="mt-0.5 h-4 w-4 text-gray-300 shrink-0" />
+      )}
+      <span className="leading-6">{children}</span>
+    </li>
+  );
 }
 
-export default function PricingGrid() {
-  const plans: Plan[] = [
-    {
-      name: 'Essai Découverte',
-      price: '99 € TTC',
-      duration: "7 jours d’accès",
-      intro: 'Pour tester en douceur.',
-      includes: [
-        "Découverte de l’interface complète",
-        'Page de démonstration fonctionnelle',
-        'Invitation de quelques proches',
-        'Assistance par e-mail',
-        'Réduction sur votre pack suivant',
-      ],
-      ctaText: "Commencer l'essai",
-      ctaLink: '/contact?plan=essai',
-      note: 'Offre de lancement non applicable à la formule Essai.',
-    },
-    {
-      name: 'Pack Classique',
-      // -40% sur 199 → 119
-      originalPrice: '199 € TTC',
-      price: '119 € TTC',
-      savingText: 'Économie : 80 € TTC',
-      duration: 'Pour 1 événement',
-      intro: "L’essentiel pour votre événement",
-      includes: [
-        'Page créée sur-mesure par notre équipe',
-        'Mode statique OU portable au choix',
-        'Espace privé pour récupérer vos contenus',
-        'Personnalisation des couleurs et du style',
-        'Assistance e-mail tout au long',
-      ],
-      promoHint: 'Réduction de lancement',
-      ctaText: 'Choisir Classique',
-      ctaLink: '/contact?plan=classique',
-    },
-    {
-      name: 'Pack Premium',
-      // -40% sur 299 → 179 (cap 120€)
-      originalPrice: '299 € TTC',
-      price: '179 € TTC',
-      savingText: 'Économie : 120 € TTC',
-      duration: 'Pour 1 événement',
-      intro: "L’expérience complète",
-      includes: [
-        'Tout du Pack Classique',
-        'Adresse web personnalisée',
-        'Design et détails particulièrement soignés',
-        'Mise en route guidée étape par étape',
-        'Support prioritaire et accompagnement renforcé',
-      ],
-      promoHint: 'Réduction de lancement',
-      recommended: true,
-      ctaText: 'Choisir Premium',
-      ctaLink: '/contact?plan=premium',
-    },
-  ]
+/* ---------- InfoTip : petit "i" au clic/hover ---------- */
+function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-block">
+      <button
+        type="button"
+        className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 select-none"
+        aria-label="Informations"
+        onClick={() => setOpen((v) => !v)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        i
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-2 w-64 rounded-md border bg-white p-2 text-xs text-gray-700 shadow">
+          {text}
+        </div>
+      )}
+    </span>
+  );
+}
+
+/* ---------- Types ---------- */
+type PlanKey = "decouverte" | "classique" | "premium";
+
+type Plan = {
+  key: PlanKey;
+  title: string;
+  pitch: string;
+  price: string;
+  strike?: string;
+  highlight?: "recommended" | "complete";
+};
+
+/* ---------- Données marketing des plans ---------- */
+const PLANS: Plan[] = [
+  {
+    key: "decouverte",
+    title: "Essai Découverte",
+    price: "99€ TTC",
+    pitch: "Testez sans risque et voyez si vos invités accrochent.",
+  },
+  {
+    key: "classique",
+    title: "Pack Classique",
+    price: "119€ TTC",
+    strike: "199€",
+    highlight: "recommended",
+    pitch: "Tout l’essentiel pour une collecte simple et sans friction.",
+  },
+  {
+    key: "premium",
+    title: "Pack Premium",
+    price: "179€ TTC",
+    strike: "299€",
+    highlight: "complete",
+    pitch: "Expérience fluide, élégante et sans compromis. Vous profitez, on s’occupe du reste.",
+  },
+];
+
+/* ---------- Matrice des fonctionnalités ---------- */
+const ALL_FEATURES: {
+  id: string;
+  label: string;
+  info?: string;
+  showIn: PlanKey[];
+}[] = [
+  {
+    id: "static",
+    label: "Mode statique sur écran ou tablette avec QR visible",
+    showIn: ["decouverte", "classique", "premium"],
+  },
+  {
+    id: "portable",
+    label: "Mode portable avec lien privé sur les smartphones invités",
+    showIn: ["decouverte", "classique", "premium"],
+  },
+  {
+    id: "private",
+    label: "Lien privé avec collecte de photos et de vidéos",
+    showIn: ["decouverte", "classique", "premium"],
+  },
+  {
+    id: "qrcode",
+    label: "QR code inclus",
+    info:
+      "Le QR code permet aux invités d’ouvrir la page privée en quelques secondes et d’envoyer leurs photos et vidéos depuis leur téléphone. Aucun compte n’est requis.",
+    showIn: ["decouverte", "classique", "premium"],
+  },
+  {
+    id: "guided",
+    label:
+      "Mise en route guidée en visio 30 min plus check-list et test en direct",
+    showIn: ["classique", "premium"],
+  },
+  {
+    id: "branding",
+    label: "Personnalisation visuelle avec vos couleurs et votre style",
+    showIn: ["classique", "premium"],
+  },
+  {
+    id: "customUrl",
+    label: "Adresse web personnalisée",
+    showIn: ["premium"],
+  },
+  {
+    id: "support",
+    label: "Support prioritaire le jour J par email et chat",
+    showIn: ["premium"],
+  },
+  {
+    id: "privacy",
+    label: "Confidentialité activée par défaut",
+    showIn: ["decouverte", "classique", "premium"],
+  },
+];
+
+/* ---------- Génération des features par plan ---------- */
+function useFeatures(plan: PlanKey) {
+  return useMemo(
+    () =>
+      ALL_FEATURES.map((f) => {
+        const ok = f.showIn.indexOf(plan) !== -1; // no .includes for older TS libs
+        return { ...f, ok };
+      }),
+    [plan]
+  );
+}
+
+/* ---------- Carte d'un plan ---------- */
+function PlanCard({ plan }: { plan: Plan }) {
+  const features = useFeatures(plan.key);
 
   return (
-    <>
-      <div className="grid gap-8 md:grid-cols-3">
-        {plans.map((plan) => (
-          <article
-            key={plan.name}
-            className={`card relative overflow-visible p-8 pt-10 flex flex-col bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow ${
-              plan.recommended ? 'ring-2 ring-or' : ''
-            }`}
-          >
-            {/* Badge recommandé */}
-            {plan.recommended && (
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-10">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-or text-white px-3 py-1 text-[11px] font-semibold shadow-md ring-1 ring-or/70">
-                  <Star className="h-3.5 w-3.5" />
-                  Recommandé
-                </span>
-              </div>
+    <div
+      className={[
+        // contraste renforcé
+        "rounded-2xl border-2 shadow bg-white border-gray-300",
+        plan.key === "classique" ? "border-emerald-300" : "",
+        plan.key === "premium" ? "border-amber-300" : "",
+      ].join(" ")}
+    >
+      {/* header */}
+      <div className="p-6 border-b-2 border-gray-300 bg-white/70 rounded-t-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="font-title text-2xl text-encre">{plan.title}</h3>
+            <p className="text-sm text-gray-600 mt-1 max-w-md">
+              {plan.pitch}
+            </p>
+          </div>
+
+          <div className="flex flex-col items-end gap-2">
+            {plan.highlight === "recommended" && (
+              <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-xs font-medium">
+                Recommandé
+              </span>
             )}
-
-            <header className="text-center mb-6">
-              <h3 className="font-title text-2xl text-encre">{plan.name}</h3>
-
-              {/* Bloc prix avec éventuel prix barré + économie */}
-              <div className="mt-2 space-y-1">
-                {plan.originalPrice && (
-                  <span className="block text-sm text-gray-400 line-through">
-                    {plan.originalPrice}
-                  </span>
-                )}
-
-                <div>
-                  <span className="text-4xl font-bold text-or">{plan.price}</span>
-                </div>
-
-                {plan.savingText && (
-                  <p className="text-sm font-semibold text-emerald-600">
-                    {plan.savingText}
-                  </p>
-                )}
-
-                {plan.duration && (
-                  <p className="text-xs text-gray-500">{plan.duration}</p>
-                )}
-
-                {plan.promoHint && (
-                  <p className="text-[11px] text-encre/70">{plan.promoHint}</p>
-                )}
-              </div>
-
-              <p className="text-sm text-gray-700 mt-3">{plan.intro}</p>
-            </header>
-
-            <ul className="space-y-3 mb-6 flex-1">
-              {plan.includes.map((f, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-5 h-5 text-or mt-0.5 flex-shrink-0 fill-current"
-                  >
-                    <path d="M9 16.2l-3.5-3.5-1.4 1.4L9 19 20 8l-1.4-1.4z" />
-                  </svg>
-                  <span className="text-sm text-gray-800">{f}</span>
-                </li>
-              ))}
-            </ul>
-
-            {plan.note && (
-              <p className="text-xs text-gray-500 mb-4 text-center">{plan.note}</p>
+            {plan.highlight === "complete" && (
+              <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-xs font-medium">
+                Le plus complet
+              </span>
             )}
+          </div>
+        </div>
 
-            <footer>
-              <Link
-                href={plan.ctaLink}
-                className={`btn w-full ${plan.recommended ? 'btn-primary' : 'btn-outline'}`}
-              >
-                {plan.ctaText}
-              </Link>
-            </footer>
-          </article>
+        <div className="mt-4 flex items-baseline gap-3">
+          <div className="text-3xl font-semibold text-encre">{plan.price}</div>
+          {plan.strike && (
+            <div className="text-sm text-gray-400 line-through">
+              {plan.strike}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* body */}
+      <div className="p-6">
+        <ul className="space-y-2">
+          {features.map((f) => (
+            <Feature key={f.id} ok={f.ok}>
+              <span>
+                {f.label}
+                {f.id === "qrcode" && f.info && <InfoTip text={f.info} />}
+              </span>
+            </Feature>
+          ))}
+        </ul>
+
+        <Link
+          href={`/contact?plan=${plan.key}`}
+          className={[
+            "mt-6 inline-flex w-full items-center justify-center rounded-full px-4 py-2.5 font-medium transition",
+            plan.key === "premium"
+              ? "btn btn-primary"
+              : "border-2 border-gray-400 hover:border-or hover:text-or bg-white",
+          ].join(" ")}
+        >
+          Choisir ce plan
+        </Link>
+
+        <p className="mt-3 text-xs text-gray-500">
+          Aucune application n’est requise pour les invités.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Grille complète ---------- */
+export default function PricingGrid() {
+  return (
+    <section aria-label="Tarifs MemoriaBox">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {PLANS.map((p) => (
+          <PlanCard key={p.key} plan={p} />
         ))}
       </div>
 
-      {/* précision globale sous la grille */}
-      <p className="text-xs text-center text-gray-600 mt-4">
-        Offre de lancement valable sur <strong>Pack Classique</strong> et <strong>Pack Premium</strong> uniquement (hors Essai).
-      </p>
-    </>
-  )
+      {/* Bloc d’explication simple et sans icônes */}
+      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 text-sm text-gray-700">
+        <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <p className="font-semibold text-encre">Mode statique</p>
+            <p className="mt-1">
+              La page s’affiche sur un support fixe comme un écran ou une
+              tablette posée. Un QR code visible invite les invités à scanner et
+              à contribuer depuis leur téléphone.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-encre">Mode portable</p>
+            <p className="mt-1">
+              Le lien privé est partagé aux invités. Ils ouvrent la page sur
+              leur smartphone et envoient leurs photos et vidéos avant, pendant
+              et après l’événement.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-encre">Mise en route guidée</p>
+            <p className="mt-1">
+              Session en visio de 30 minutes avec check-list et test en direct
+              afin de valider le parcours. Pas d’envoi de matériel.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }

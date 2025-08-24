@@ -146,7 +146,7 @@ export default function FeaturesPage() {
       <section className="container-max pb-12">
         <div className="text-center mb-8">
           <h2 className="font-title text-2xl md:text-3xl text-encre">
-            Comment ça se passe — simplement
+            Comment ça se passe, simplement
           </h2>
           <p className="text-gray-700">
             Le cerveau retient mieux un déroulé clair : on suit votre rythme.
@@ -192,7 +192,7 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* CTA final — choix guidé, pas d’inflation de choix */}
+      {/* CTA final, choix guidé, pas d’inflation de choix */}
       <section className="container-max pb-16">
         <div className="card p-8 text-center">
           <h3 className="font-title text-2xl text-encre mb-2">

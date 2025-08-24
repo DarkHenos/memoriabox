@@ -405,7 +405,7 @@ function ContactFormInner() {
 
   return (
     <div className="grid lg:grid-cols-3 gap-8">
-      {/* Sidebar — MASQUÉE SUR MOBILE */}
+      {/* Sidebar, MASQUÉE SUR MOBILE */}
       <aside className="lg:col-span-1 space-y-4">
         <div className="card p-6 hidden sm:block">
           <Mail className="w-6 h-6 text-or mb-2" />
