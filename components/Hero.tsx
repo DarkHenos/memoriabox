@@ -17,28 +17,28 @@ export default function Hero() {
   const [del, setDel] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
-  // === CONFIG TYPEWRITER ===
-  const PAUSE_FULL_MS = 3500;
-  const PAUSE_EMPTY_MS = 400;
-  const DELETE_SPEED = 60;
-  const TYPE_SPEED_BASE = 80;
+  // === TIMINGS IDENTIQUES À L’ANCIENNE VERSION ===
+  // 3.2 s par cycle, pauses stables
+  const TOTAL_MS = 3200;
+  const PAUSE_FULL_MS = 2750;  // pause lorsque le mot est complet
+  const PAUSE_EMPTY_MS = 450;  // pause à vide
+  // Pas de caractère fixe calculé sur la longueur du MOT (sans le préfixe)
+  const stepMs = Math.max(
+    50,
+    Math.floor(
+      (TOTAL_MS - (PAUSE_FULL_MS + PAUSE_EMPTY_MS)) / (2 * Math.max(1, WORDS[i].length))
+    )
+  );
 
-  const getTypeSpeed = (char: string) => {
-    // compat ES5 / TS lib basse
-    if ([" ", "'", "d", "e"].indexOf(char) !== -1) return TYPE_SPEED_BASE + 40;
-    return TYPE_SPEED_BASE + Math.random() * 30;
-  };
-
+  // === LOGIQUE TYPEWRITER (même tempo qu’avant) ===
   useEffect(() => {
-    const full = DYNAMIC_PREFIX + WORDS[i]; // texte “référence” pour le tempo
-    let t: number | undefined;
+    const fullLen = WORDS[i].length; // on ne compte QUE le mot
+    let t: number;
 
     if (!del) {
       setIsTyping(true);
-      if (sub < full.length) {
-        const nextChar = full[sub];
-        const speed = getTypeSpeed(nextChar);
-        t = window.setTimeout(() => setSub((s) => s + 1), speed);
+      if (sub < fullLen) {
+        t = window.setTimeout(() => setSub((s) => s + 1), stepMs);
       } else {
         setIsTyping(false);
         t = window.setTimeout(() => setDel(true), PAUSE_FULL_MS);
@@ -46,7 +46,7 @@ export default function Hero() {
     } else {
       setIsTyping(true);
       if (sub > 0) {
-        t = window.setTimeout(() => setSub((s) => s - 1), DELETE_SPEED);
+        t = window.setTimeout(() => setSub((s) => s - 1), stepMs);
       } else {
         setIsTyping(false);
         t = window.setTimeout(() => {
@@ -56,8 +56,8 @@ export default function Hero() {
       }
     }
 
-    return () => { if (t !== undefined) clearTimeout(t); };
-  }, [sub, del, i]);
+    return () => clearTimeout(t);
+  }, [sub, del, i, stepMs]);
 
   // === MESURES (hauteur mobile + largeur desktop) ===
   const h1Ref = useRef<HTMLHeadingElement>(null);
@@ -96,21 +96,39 @@ export default function Hero() {
   const item = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.25, 0.8, 0.25, 1] } } };
 
   return (
-    <section className="relative isolate flex items-center py-12 lg:py-20 overflow-x-hidden" style={{ minHeight: "calc(100vh - 140px)" }} aria-label="Présentation de MemoriaBox">
+    <section
+      className="relative isolate flex items-center py-12 lg:py-20 overflow-x-hidden"
+      style={{ minHeight: "calc(100vh - 140px)" }}
+      aria-label="Présentation de MemoriaBox"
+    >
       <div className="container-max">
         <motion.div variants={container} initial="hidden" animate="visible" className="mx-auto max-w-4xl text-center">
           {/* H1 responsive et centré */}
-          <motion.h1 ref={h1Ref} variants={item} className="font-title text-4xl lg:text-6xl mb-5 text-encre leading-tight mx-auto max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch] text-center">
+          <motion.h1
+            ref={h1Ref}
+            variants={item}
+            className="font-title text-4xl lg:text-6xl mb-5 text-encre leading-tight mx-auto max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch] text-center"
+          >
             Réunissez tous les souvenirs de{" "}
-            <span className="relative block mx-auto text-center whitespace-normal break-words sm:inline-flex sm:justify-center sm:whitespace-nowrap sm:break-normal sm:text-center align-baseline"
-                  style={{ height: box.h ? `${box.h}px` : undefined, width: box.w ? `${box.w}px` : undefined, verticalAlign: "baseline", maxWidth: "100%" }}>
+            <span
+              className="relative block mx-auto text-center whitespace-normal break-words sm:inline-flex sm:justify-center sm:whitespace-nowrap sm:break-normal sm:text-center align-baseline"
+              style={{
+                height: box.h ? `${box.h}px` : undefined,
+                width: box.w ? `${box.w}px` : undefined,
+                verticalAlign: "baseline",
+                maxWidth: "100%",
+              }}
+            >
               <span className="font-medium">
                 {/* préfixe fixe en noir */}
                 <span className="text-encre">votre&nbsp;</span>
                 {/* mot animé en doré + caret */}
                 <span className="text-or">
                   {WORDS[i].slice(0, sub)}
-                  <span aria-hidden className={`inline-block align-baseline ml-1 caret-enhanced ${isTyping ? "caret-typing" : ""}`} />
+                  <span
+                    aria-hidden
+                    className={`inline-block align-baseline ml-1 caret-enhanced ${isTyping ? "caret-typing" : ""}`}
+                  />
                 </span>
               </span>
             </span>
@@ -129,16 +147,20 @@ export default function Hero() {
       </div>
 
       {/* Mesures invisibles, placées hors écran pour éviter tout overflow horizontal */}
-      <span ref={measureWrapRef}
-            className="absolute -z-50 pointer-events-none opacity-0 block whitespace-normal break-words font-title text-4xl lg:text-6xl leading-tight font-medium max-w-full"
-            style={{ left: -9999, top: 0 }}
-            aria-hidden>
+      <span
+        ref={measureWrapRef}
+        className="absolute -z-50 pointer-events-none opacity-0 block whitespace-normal break-words font-title text-4xl lg:text-6xl leading-tight font-medium max-w-full"
+        style={{ left: -9999, top: 0 }}
+        aria-hidden
+      >
         {LONGEST_DYNAMIC}
       </span>
-      <span ref={measureNowrapRef}
-            className="absolute -z-50 pointer-events-none opacity-0 whitespace-nowrap font-title text-4xl lg:text-6xl leading-tight font-medium max-w-full"
-            style={{ left: -9999, top: 0 }}
-            aria-hidden>
+      <span
+        ref={measureNowrapRef}
+        className="absolute -z-50 pointer-events-none opacity-0 whitespace-nowrap font-title text-4xl lg:text-6xl leading-tight font-medium max-w-full"
+        style={{ left: -9999, top: 0 }}
+        aria-hidden
+      >
         {LONGEST_DYNAMIC}
       </span>
 

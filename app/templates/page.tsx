@@ -2,7 +2,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 
 interface Template {
@@ -60,8 +59,8 @@ export default function TemplatesPage() {
     { value: 'retraite', label: 'Retraite' }
   ]
 
-  const filteredTemplates = selectedCategory === 'tous' 
-    ? templates 
+  const filteredTemplates = selectedCategory === 'tous'
+    ? templates
     : templates.filter(t => t.category === selectedCategory)
 
   return (
@@ -70,7 +69,7 @@ export default function TemplatesPage() {
         <div className="text-center mb-12">
           <h1 className="font-title text-4xl mb-4 text-encre">Nos réalisations</h1>
           <p className="text-gray-700 max-w-2xl mx-auto">
-            Découvrez quelques exemples de pages créées pour nos clients. 
+            Découvrez quelques exemples de pages créées pour nos clients.
             Chaque projet est unique et personnalisé.
           </p>
         </div>
@@ -97,17 +96,17 @@ export default function TemplatesPage() {
           {filteredTemplates.map(template => (
             <div key={template.id} className="card overflow-hidden group">
               <div className="aspect-video bg-gray-100 relative">
-                {/* Placeholder pour l'image */}
+                {/* Placeholder visuel */}
                 <div className="absolute inset-0 bg-gradient-to-br from-or/20 to-beige/40 flex items-center justify-center">
                   <span className="text-4xl">🎨</span>
                 </div>
               </div>
-              
+
               <div className="p-6">
                 <span className="badge mb-3">{template.category}</span>
                 <h3 className="font-title text-xl mb-2 text-encre">{template.title}</h3>
                 <p className="text-gray-600 mb-4">{template.description}</p>
-                
+
                 <ul className="space-y-1 mb-4">
                   {template.features.map((feature, idx) => (
                     <li key={idx} className="text-sm text-gray-700 flex items-center gap-2">
@@ -116,7 +115,7 @@ export default function TemplatesPage() {
                     </li>
                   ))}
                 </ul>
-                
+
                 <Link href={`/contact?template=${template.id}`} className="btn btn-outline w-full">
                   Créer une page similaire
                 </Link>

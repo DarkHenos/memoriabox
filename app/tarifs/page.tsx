@@ -5,9 +5,9 @@ import Link from "next/link";
 
 export const metadata = {
   alternates: { canonical: "/tarifs" },
-  title: "Tarifs - MemoriaBox",
+  title: "Tarifs MemoriaBox - Mariages, anniversaires et événements",
   description:
-    "Trois formules claires pour collecter photos et vidéos de vos invités. QR code inclus, aucune application, confidentialité par défaut.",
+    "Découvrez nos formules pour collecter et partager photos et vidéos de vos invités. QR code inclus, aucune application, confidentialité garantie. Choisissez l’offre adaptée à votre événement.",
 };
 
 export default function TarifsPage() {
@@ -81,6 +81,6 @@ export default function TarifsPage() {
           </p>
         </div>
       </section>
-      </main>
+    </main>
   );
 }
