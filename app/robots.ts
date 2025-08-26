@@ -1,35 +1,23 @@
 // app/robots.ts
 import type { MetadataRoute } from "next";
-import { getSiteUrl, isProd } from "@/lib/site";
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://memoriabox.fr");
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = getSiteUrl();
-
-  if (!isProd()) {
-    // Préviews & dev : on bloque tout pour éviter le contenu dupliqué
-    return {
-      rules: [{ userAgent: "*", disallow: "/" }],
-      sitemap: `${siteUrl}/sitemap.xml`,
-      host: siteUrl,
-    };
-  }
-
-  // Production : on autorise tout sauf les zones techniques
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: ["/"],
-        disallow: [
-          "/api/",         // endpoints internes
-          "/admin",        // si un jour présent
-          "/private",      // zones privées éventuelles
-          "/drafts",       // brouillons éventuels
-        ],
-      },
-      // (facultatif) bots spécifiques si besoin plus tard
-      // { userAgent: "GPTBot", disallow: "/" },
-    ],
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: [
+        // protège les zones techniques / inutiles au crawl
+        "/api/",
+        "/admin",
+        "/private",
+        "/_next/",
+      ],
+    },
     sitemap: `${siteUrl}/sitemap.xml`,
     host: siteUrl,
   };

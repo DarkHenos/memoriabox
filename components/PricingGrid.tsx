@@ -2,50 +2,20 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { useMemo } from "react";
+import { CheckCircle2, XCircle, Info } from "lucide-react";
 
-/* ---------- Petit composant "tick/cross" ---------- */
-function Feature({
-  ok,
-  children,
-}: {
-  ok: boolean;
-  children: React.ReactNode;
-}) {
+/* ---------- Item de feature ---------- */
+function Feature({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
-    <li className="flex items-start gap-2 text-sm text-gray-800">
+    <li className="flex items-start gap-2 text-[15px] text-gray-700 leading-6">
       {ok ? (
-        <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-600 shrink-0" />
+        <CheckCircle2 className="mt-0.5 h-4 w-4 text-or shrink-0" aria-label="Inclus" />
       ) : (
-        <XCircle className="mt-0.5 h-4 w-4 text-gray-300 shrink-0" />
+        <XCircle className="mt-0.5 h-4 w-4 text-gray-300 shrink-0" aria-label="Non inclus" />
       )}
-      <span className="leading-6">{children}</span>
+      <span>{children}</span>
     </li>
-  );
-}
-
-/* ---------- InfoTip : petit "i" au clic/hover ---------- */
-function InfoTip({ text }: { text: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <span className="relative inline-block">
-      <button
-        type="button"
-        className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 select-none"
-        aria-label="Informations"
-        onClick={() => setOpen((v) => !v)}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-      >
-        i
-      </button>
-      {open && (
-        <div className="absolute z-10 mt-2 w-64 rounded-md border bg-white p-2 text-xs text-gray-700 shadow">
-          {text}
-        </div>
-      )}
-    </span>
   );
 }
 
@@ -59,15 +29,17 @@ type Plan = {
   price: string;
   strike?: string;
   highlight?: "recommended" | "complete";
+  badgeNote?: string;
 };
 
-/* ---------- Données marketing des plans ---------- */
+/* ---------- Plans (tarifs) ---------- */
 const PLANS: Plan[] = [
   {
     key: "decouverte",
     title: "Essai Découverte",
     price: "99€ TTC",
-    pitch: "Testez sans risque et voyez si vos invités accrochent.",
+    pitch: "Testez la collecte avant votre événement.",
+    badgeNote: "",
   },
   {
     key: "classique",
@@ -75,7 +47,8 @@ const PLANS: Plan[] = [
     price: "119€ TTC",
     strike: "199€",
     highlight: "recommended",
-    pitch: "Tout l’essentiel pour une collecte simple et sans friction.",
+    pitch: "Tout l'essentiel, simple et efficace.",
+    badgeNote: "Recommandé",
   },
   {
     key: "premium",
@@ -83,11 +56,12 @@ const PLANS: Plan[] = [
     price: "179€ TTC",
     strike: "299€",
     highlight: "complete",
-    pitch: "Expérience fluide, élégante et sans compromis. Vous profitez, on s’occupe du reste.",
+    pitch: "Tout compris + assistance le jour J.",
+    badgeNote: "Sérénité maximale",
   },
 ];
 
-/* ---------- Matrice des fonctionnalités ---------- */
+/* ---------- Matrice des features ---------- */
 const ALL_FEATURES: {
   id: string;
   label: string;
@@ -96,35 +70,33 @@ const ALL_FEATURES: {
 }[] = [
   {
     id: "static",
-    label: "Mode statique sur écran ou tablette avec QR visible",
+    label: "Mode statique (écran/tablette) avec QR visible",
     showIn: ["decouverte", "classique", "premium"],
   },
   {
     id: "portable",
-    label: "Mode portable avec lien privé sur les smartphones invités",
+    label: "Mode portable (lien privé sur smartphone invité)",
     showIn: ["decouverte", "classique", "premium"],
   },
   {
     id: "private",
-    label: "Lien privé avec collecte de photos et de vidéos",
+    label: "Collecte de photos et de vidéos en privé",
     showIn: ["decouverte", "classique", "premium"],
   },
   {
     id: "qrcode",
     label: "QR code inclus",
-    info:
-      "Le QR code permet aux invités d’ouvrir la page privée en quelques secondes et d’envoyer leurs photos et vidéos depuis leur téléphone. Aucun compte n’est requis.",
+    info: "Le QR code ouvre la page privée en 2 secondes, sans compte ni application.",
     showIn: ["decouverte", "classique", "premium"],
   },
   {
     id: "guided",
-    label:
-      "Mise en route guidée en visio 30 min plus check-list et test en direct",
+    label: "Mise en route guidée (visio 30 min) + check-list + test",
     showIn: ["classique", "premium"],
   },
   {
     id: "branding",
-    label: "Personnalisation visuelle avec vos couleurs et votre style",
+    label: "Personnalisation visuelle (couleurs / style)",
     showIn: ["classique", "premium"],
   },
   {
@@ -134,7 +106,17 @@ const ALL_FEATURES: {
   },
   {
     id: "support",
-    label: "Support prioritaire le jour J par email et chat",
+    label: "Support prioritaire le jour J (email + chat)",
+    showIn: ["premium"],
+  },
+  {
+    id: "moderation",
+    label: "Modération & tri des médias après l'événement",
+    showIn: ["premium"],
+  },
+  {
+    id: "hosting",
+    label: "Hébergement prolongé de la page (1 mois)",
     showIn: ["premium"],
   },
   {
@@ -144,73 +126,117 @@ const ALL_FEATURES: {
   },
 ];
 
-/* ---------- Génération des features par plan ---------- */
 function useFeatures(plan: PlanKey) {
   return useMemo(
     () =>
       ALL_FEATURES.map((f) => {
-        const ok = f.showIn.indexOf(plan) !== -1; // no .includes for older TS libs
+        const ok = f.showIn.indexOf(plan) !== -1;
         return { ...f, ok };
       }),
     [plan]
   );
 }
 
+/* ---------- Badges ---------- */
+function Badge({ type }: { type?: "recommended" | "complete" }) {
+  if (type === "recommended")
+    return (
+      <span className="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold tracking-wide bg-white/90 text-encre">
+        Recommandé
+      </span>
+    );
+  if (type === "complete")
+    return (
+      <span className="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold tracking-wide bg-white/90 text-encre">
+        Le plus complet
+      </span>
+    );
+  return null;
+}
+
 /* ---------- Carte d'un plan ---------- */
 function PlanCard({ plan }: { plan: Plan }) {
   const features = useFeatures(plan.key);
 
-  return (
-    <div
-      className={[
-        // contraste renforcé
-        "rounded-2xl border-2 shadow bg-white border-gray-300",
-        plan.key === "classique" ? "border-emerald-300" : "",
-        plan.key === "premium" ? "border-amber-300" : "",
-      ].join(" ")}
-    >
-      {/* header */}
-      <div className="p-6 border-b-2 border-gray-300 bg-white/70 rounded-t-2xl">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="font-title text-2xl text-encre">{plan.title}</h3>
-            <p className="text-sm text-gray-600 mt-1 max-w-md">
-              {plan.pitch}
-            </p>
-          </div>
+  // Style cohérent avec plus de contraste
+  const tone =
+    plan.key === "classique"
+      ? {
+          card: "card hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ring-2 ring-or border-2 border-or/30",
+          headerBg: "bg-gradient-to-br from-or to-amber-500 text-white",
+          cta: "btn bg-or hover:bg-amber-600 text-white font-bold",
+          chip: "bg-white/90 text-encre font-bold",
+          badge: "absolute top-3 right-3",
+        }
+      : plan.key === "premium"
+      ? {
+          card: "card hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ring-2 ring-gray-800 border-2 border-gray-700",
+          headerBg: "bg-gradient-to-br from-gray-800 to-gray-900 text-white",
+          cta: "btn bg-gray-800 hover:bg-gray-900 text-white font-bold",
+          chip: "bg-white/90 text-encre font-bold",
+          badge: "absolute top-3 right-3",
+        }
+      : {
+          card: "card hover:shadow-lg transition-all duration-300 border-2 border-gray-300",
+          headerBg: "bg-white text-encre border-b-2 border-gray-200",
+          cta: "btn btn-outline border-2 hover:bg-gray-800 hover:text-white font-bold",
+          chip: "bg-gray-100 text-gray-700 font-bold",
+          badge: "",
+        };
 
-          <div className="flex flex-col items-end gap-2">
-            {plan.highlight === "recommended" && (
-              <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-xs font-medium">
-                Recommandé
-              </span>
-            )}
-            {plan.highlight === "complete" && (
-              <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-xs font-medium">
-                Le plus complet
-              </span>
-            )}
+  const saving =
+    plan.strike &&
+    (() => {
+      const s = parseInt(plan.strike.replace(/\D/g, "") || "0", 10);
+      const p = parseInt(plan.price.replace(/\D/g, "") || "0", 10);
+      return s > p ? `${s - p}€ d'économie` : null;
+    })();
+
+  return (
+    <article 
+      className={`${tone.card} overflow-hidden flex flex-col h-full`}
+      itemScope 
+      itemType="https://schema.org/Offer"
+    >
+      {/* Header avec hauteur fixe */}
+      <header className={`${tone.headerBg} px-6 py-5 relative min-h-[140px]`}>
+        {plan.highlight && (
+          <div className={tone.badge}>
+            <Badge type={plan.highlight} />
           </div>
+        )}
+        
+        <div>
+          <h3 className="font-title text-2xl leading-7" itemProp="name">{plan.title}</h3>
+          <p className="mt-1 text-sm/5 opacity-95" itemProp="description">{plan.pitch}</p>
         </div>
 
-        <div className="mt-4 flex items-baseline gap-3">
-          <div className="text-3xl font-semibold text-encre">{plan.price}</div>
+        <div className="mt-3 flex items-baseline gap-2">
+          <div className="text-3xl font-bold">{plan.price}</div>
           {plan.strike && (
-            <div className="text-sm text-gray-400 line-through">
-              {plan.strike}
-            </div>
+            <div className="text-sm/5 opacity-70 line-through">{plan.strike}</div>
+          )}
+          {saving && (
+            <span className={`text-xs px-2 py-0.5 rounded ${tone.chip}`}>
+              {saving}
+            </span>
           )}
         </div>
-      </div>
+        <meta itemProp="priceCurrency" content="EUR" />
+      </header>
 
-      {/* body */}
-      <div className="p-6">
-        <ul className="space-y-2">
+      {/* Body avec flex-grow pour égaliser les hauteurs */}
+      <div className="p-6 flex-grow flex flex-col">
+        <ul className="space-y-2 flex-grow">
           {features.map((f) => (
             <Feature key={f.id} ok={f.ok}>
-              <span>
+              <span className="inline-flex items-center gap-1">
                 {f.label}
-                {f.id === "qrcode" && f.info && <InfoTip text={f.info} />}
+                {f.info && (
+                  <abbr title={f.info} className="cursor-help no-underline">
+                    <Info className="h-3.5 w-3.5 text-gray-500" aria-label="Information" />
+                  </abbr>
+                )}
               </span>
             </Feature>
           ))}
@@ -218,58 +244,56 @@ function PlanCard({ plan }: { plan: Plan }) {
 
         <Link
           href={`/contact?plan=${plan.key}`}
-          className={[
-            "mt-6 inline-flex w-full items-center justify-center rounded-full px-4 py-2.5 font-medium transition",
-            plan.key === "premium"
-              ? "btn btn-primary"
-              : "border-2 border-gray-400 hover:border-or hover:text-or bg-white",
-          ].join(" ")}
+          className={`mt-6 inline-flex w-full items-center justify-center ${tone.cta} py-3 rounded-full`}
+          aria-label={`Choisir le plan ${plan.title}`}
         >
           Choisir ce plan
         </Link>
 
-        <p className="mt-3 text-xs text-gray-500">
-          Aucune application n’est requise pour les invités.
+        <p className="mt-3 text-xs text-gray-600 text-center">
+          Aucune application n'est requise pour les invités.
         </p>
       </div>
-    </div>
+    </article>
   );
 }
 
-/* ---------- Grille complète ---------- */
+/* ---------- Grille ---------- */
 export default function PricingGrid() {
   return (
     <section aria-label="Tarifs MemoriaBox">
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <p className="text-center text-gray-700 mb-4">
+        Classique est recommandé, <span className="font-semibold">Premium inclut tout</span> + assistance le jour J.
+      </p>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-7">
         {PLANS.map((p) => (
           <PlanCard key={p.key} plan={p} />
         ))}
       </div>
 
-      {/* Bloc d’explication simple et sans icônes */}
-      <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 text-sm text-gray-700">
-        <div className="grid md:grid-cols-3 gap-4">
+      {/* Bloc explicatif */}
+      <div className="mt-10 card p-6 text-[15px] text-gray-700">
+        <div className="grid md:grid-cols-3 gap-6">
           <div>
             <p className="font-semibold text-encre">Mode statique</p>
             <p className="mt-1">
-              La page s’affiche sur un support fixe comme un écran ou une
-              tablette posée. Un QR code visible invite les invités à scanner et
-              à contribuer depuis leur téléphone.
+              La page s'affiche sur un écran ou une tablette posée. Un QR code
+              invite à contribuer depuis le smartphone.
             </p>
           </div>
           <div>
             <p className="font-semibold text-encre">Mode portable</p>
             <p className="mt-1">
-              Le lien privé est partagé aux invités. Ils ouvrent la page sur
-              leur smartphone et envoient leurs photos et vidéos avant, pendant
-              et après l’événement.
+              Le lien privé est partagé aux invités. Ils envoient photos & vidéos
+              avant, pendant et après l'événement.
             </p>
           </div>
           <div>
-            <p className="font-semibold text-encre">Mise en route guidée</p>
+            <p className="font-semibold text-encre">Assistance</p>
             <p className="mt-1">
-              Session en visio de 30 minutes avec check-list et test en direct
-              afin de valider le parcours. Pas d’envoi de matériel.
+              Du test au jour J. L'option Premium inclut la priorité jour J +
+              modération et hébergement prolongé.
             </p>
           </div>
         </div>

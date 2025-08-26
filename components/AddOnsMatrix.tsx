@@ -14,120 +14,125 @@ type AddOn = {
   availability: Record<PlanKey, Availability>;
 };
 
-/* Petit "i" info avec placement auto (gauche/droite) + pas de clipping */
+/* Tooltip simple & accessible */
 function InfoTip({ text }: { text: string }) {
-    const [open, setOpen] = useState(false);
-    const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-    const anchorRef = useRef<HTMLSpanElement>(null);
-  
-    // ferme à ESC
-    useEffect(() => {
-      const onEsc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-      window.addEventListener("keydown", onEsc);
-      return () => window.removeEventListener("keydown", onEsc);
-    }, []);
-  
-    // recalcule la position quand on ouvre / resize / scroll
-    useEffect(() => {
-      const recalc = () => {
-        const r = anchorRef.current?.getBoundingClientRect();
-        if (!r) return;
-        const TW = 256; // ~ w-64
-        const GAP = 8;
-  
-        // placement horizontal auto (priorité à droite)
-        let left = r.right - TW;               // collé à droite du bouton
-        if (left < 12) left = 12;              // marge fenêtre
-        if (left + TW > window.innerWidth - 12)
-          left = window.innerWidth - 12 - TW;  // pas de débordement
-  
-        const top = r.bottom + GAP;            // sous le bouton
-        setPos({ top, left });
-      };
-  
-      if (open) {
-        recalc();
-        window.addEventListener("resize", recalc);
-        window.addEventListener("scroll", recalc, { passive: true });
-        return () => {
-          window.removeEventListener("resize", recalc);
-          window.removeEventListener("scroll", recalc);
-        };
-      }
-    }, [open]);
-  
-    return (
-      <span ref={anchorRef} className="relative inline-block align-middle">
-        <button
-          type="button"
-          className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-or/40"
-          aria-label="Informations"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-        >
-          i
-        </button>
-  
-        {open && pos && (
-          <div
-            className="fixed z-50 w-64 rounded-md border bg-white p-2 text-xs text-gray-800 shadow"
-            style={{ top: pos.top, left: pos.left }}
-            role="tooltip"
-          >
-            {text}
-          </div>
-        )}
-      </span>
-    );
-  }
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const anchorRef = useRef<HTMLSpanElement>(null);
 
-/* Add-ons retenus */
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, []);
+
+  useEffect(() => {
+    const recalc = () => {
+      const r = anchorRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const TW = 256;
+      const GAP = 8;
+
+      let left = r.right - TW;
+      if (left < 12) left = 12;
+      if (left + TW > window.innerWidth - 12)
+        left = window.innerWidth - 12 - TW;
+
+      const top = r.bottom + GAP;
+      setPos({ top, left });
+    };
+
+    if (open) {
+      recalc();
+      window.addEventListener("resize", recalc);
+      window.addEventListener("scroll", recalc, { passive: true });
+      return () => {
+        window.removeEventListener("resize", recalc);
+        window.removeEventListener("scroll", recalc);
+      };
+    }
+  }, [open]);
+
+  return (
+    <span ref={anchorRef} className="relative inline-block align-middle">
+      <button
+        type="button"
+        className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full border border-gray-400 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-or/40"
+        aria-label="Informations"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        i
+      </button>
+
+      {open && pos && (
+        <div
+          className="fixed z-50 w-64 rounded-md border bg-white p-2 text-xs text-gray-900 shadow"
+          style={{ top: pos.top, left: pos.left }}
+          role="tooltip"
+        >
+          {text}
+        </div>
+      )}
+    </span>
+  );
+}
+
+/* Add-ons alignés avec le design system */
 const ADDONS: AddOn[] = [
   {
     id: "photobooth",
     label: "Web Photobooth",
-    info:
-      "Appareil photo dans le navigateur. Les invités posent avec leur smartphone et envoient directement dans la galerie privée.",
+    info: "Appareil photo dans le navigateur. Les invités posent avec leur smartphone et envoient directement dans la galerie privée.",
     availability: { decouverte: "none", classique: "option", premium: "option" },
   },
   {
     id: "videobooth",
     label: "Video Guestbook",
-    info:
-      "Courts témoignages vidéo capturés sur smartphone. Envoi automatique vers la page privée.",
+    info: "Courts témoignages vidéo capturés sur smartphone. Envoi automatique vers la page privée.",
     availability: { decouverte: "none", classique: "option", premium: "option" },
   },
   {
     id: "moderation",
     label: "Modération et tri",
-    info:
-      "Dédoublonnage, rotation, suppression des flous. Galerie finale propre et agréable à regarder.",
+    info: "Dédoublonnage, rotation, suppression des flous. Galerie finale propre et agréable à regarder.",
     availability: { decouverte: "none", classique: "option", premium: "included" },
   },
   {
     id: "hosting",
-    label: "Hébergement prolongé",
-    info:
-      "Conserver la page active plus longtemps après l’événement pour partager sereinement.",
-    availability: { decouverte: "none", classique: "option", premium: "option" },
+    label: "Hébergement prolongé (1 mois)",
+    info: "Garder la page active après l'événement pour partager sereinement.",
+    availability: { decouverte: "none", classique: "option", premium: "included" },
+  },
+  {
+    id: "customUrl",
+    label: "Adresse web personnalisée",
+    info: "Ex : memoriabox.fr/votre-evenement",
+    availability: { decouverte: "none", classique: "option", premium: "included" },
+  },
+  {
+    id: "supportJ",
+    label: "Support prioritaire le jour J",
+    info: "Canal prioritaire email + chat, réponse accélérée.",
+    availability: { decouverte: "none", classique: "option", premium: "included" },
   },
 ];
 
 function Cell({ value }: { value: Availability }) {
   if (value === "included") {
     return (
-      <div className="flex items-center justify-center gap-1 text-green-700">
-        <CheckCircle2 className="h-4 w-4 text-green-600" />
-        <span className="text-xs font-medium">Inclus</span>
+      <div className="flex items-center justify-center gap-1 text-or">
+        <CheckCircle2 className="h-4 w-4" />
+        <span className="text-xs font-semibold">Inclus</span>
       </div>
     );
   }
   if (value === "option") {
     return (
       <div className="flex items-center justify-center">
-        <span className="inline-flex items-center justify-center rounded-full border border-gray-400 px-2.5 py-0.5 text-xs text-gray-800 bg-white">
+        <span className="inline-flex items-center justify-center rounded-full border border-gray-400 px-2.5 py-0.5 text-xs font-medium text-gray-700 bg-white">
           Option
         </span>
       </div>
@@ -135,7 +140,7 @@ function Cell({ value }: { value: Availability }) {
   }
   return (
     <div className="flex items-center justify-center">
-      <XCircle className="h-4 w-4 text-gray-400" aria-hidden />
+      <XCircle className="h-4 w-4 text-gray-300" aria-hidden />
     </div>
   );
 }
@@ -143,22 +148,21 @@ function Cell({ value }: { value: Availability }) {
 export default function AddOnsMatrix() {
   return (
     <section aria-label="Options complémentaires" className="not-prose max-w-5xl mx-auto">
-      {/* Desktop / tablette large */}
-      {/* >>> overflow-visible pour éviter que le tooltip soit coupé <<< */}
-      <div className="hidden md:block rounded-3xl border-2 border-gray-300 bg-white overflow-hidden shadow-sm mx-auto">
-      <div className="grid [grid-template-columns:minmax(220px,1.35fr)_1fr_1fr_1fr] bg-gray-100 text-xs text-gray-800">
+      {/* Desktop */}
+      <div className="hidden md:block card overflow-hidden mx-auto">
+        <div className="grid [grid-template-columns:minmax(220px,1.35fr)_1fr_1fr_1fr] bg-gradient-to-r from-encre to-gray-800 text-xs text-white">
           <div className="px-6 py-4 font-semibold text-left">Option</div>
           <div className="px-4 py-4 text-center">
             <div className="font-semibold">Essai Découverte</div>
-            <div className="text-[11px] text-gray-600">Pour tester</div>
+            <div className="text-[11px] opacity-80">Pour tester</div>
           </div>
-          <div className="px-4 py-4 text-center bg-emerald-50">
-            <div className="font-semibold text-emerald-900">Pack Classique</div>
-            <div className="text-[11px] text-emerald-700">Recommandé</div>
+          <div className="px-4 py-4 text-center bg-or/20">
+            <div className="font-semibold">Pack Classique</div>
+            <div className="text-[11px] opacity-90">Recommandé</div>
           </div>
-          <div className="px-4 py-4 text-center">
+          <div className="px-4 py-4 text-center bg-white/10">
             <div className="font-semibold">Pack Premium</div>
-            <div className="text-[11px] text-gray-600">Sérénité maximale</div>
+            <div className="text-[11px] opacity-90">Sérénité maximale</div>
           </div>
         </div>
 
@@ -169,17 +173,17 @@ export default function AddOnsMatrix() {
               className={[
                 "grid [grid-template-columns:minmax(220px,1.35fr)_1fr_1fr_1fr] items-center",
                 idx % 2 === 0 ? "bg-white" : "bg-gray-50",
-                "hover:bg-or/[0.05] transition-colors",
+                "hover:bg-beige/20 transition-colors",
               ].join(" ")}
             >
-              <div className="px-6 py-3 text-sm text-encre">
-                <span className="font-medium">{a.label}</span>
+              <div className="px-6 py-3 text-[15px] text-encre">
+                <span className="font-semibold">{a.label}</span>
                 {a.info && <InfoTip text={a.info} />}
               </div>
               <div className="px-4 py-3">
                 <Cell value={a.availability.decouverte} />
               </div>
-              <div className="px-4 py-3 bg-emerald-50">
+              <div className="px-4 py-3">
                 <Cell value={a.availability.classique} />
               </div>
               <div className="px-4 py-3">
@@ -190,10 +194,10 @@ export default function AddOnsMatrix() {
         </ul>
       </div>
 
-      {/* Mobile : cartes centrées */}
+      {/* Mobile */}
       <div className="md:hidden space-y-4 max-w-md mx-auto">
         {ADDONS.map((a) => (
-          <div key={a.id} className="rounded-2xl border-2 border-gray-300 bg-white p-4 shadow-sm">
+          <div key={a.id} className="card p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="text-sm text-encre font-semibold">
                 {a.label}
@@ -202,20 +206,20 @@ export default function AddOnsMatrix() {
             </div>
 
             <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="rounded-lg bg-gray-100 p-2">
-                <div className="font-medium text-gray-800">Découverte</div>
+              <div className="rounded-lg bg-gray-50 p-2">
+                <div className="font-medium text-gray-700">Découverte</div>
                 <div className="mt-1">
                   <Cell value={a.availability.decouverte} />
                 </div>
               </div>
-              <div className="rounded-lg bg-emerald-50 p-2">
-                <div className="font-medium text-emerald-900">Classique</div>
+              <div className="rounded-lg bg-rosepale/30 p-2">
+                <div className="font-medium text-encre">Classique</div>
                 <div className="mt-1">
                   <Cell value={a.availability.classique} />
                 </div>
               </div>
-              <div className="rounded-lg bg-gray-100 p-2">
-                <div className="font-medium text-gray-800">Premium</div>
+              <div className="rounded-lg bg-beige/30 p-2">
+                <div className="font-medium text-encre">Premium</div>
                 <div className="mt-1">
                   <Cell value={a.availability.premium} />
                 </div>
@@ -224,9 +228,8 @@ export default function AddOnsMatrix() {
           </div>
         ))}
 
-        <p className="text-[11px] text-gray-700 text-center">
-          Aucune application requise pour les invités. Le QR code sert à ouvrir
-          rapidement la page privée sur smartphone.
+        <p className="text-[11px] text-gray-600 text-center">
+          Aucune application requise. Le QR code ouvre la page privée sur smartphone.
         </p>
       </div>
     </section>
