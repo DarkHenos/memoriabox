@@ -100,6 +100,11 @@ const ALL_FEATURES: {
     showIn: ["classique", "premium"],
   },
   {
+    id: "hosting_classique",
+    label: "Hébergement 3 mois après l'événement",
+    showIn: ["classique"],
+  },
+  {
     id: "customUrl",
     label: "Adresse web personnalisée",
     showIn: ["premium"],
@@ -115,14 +120,20 @@ const ALL_FEATURES: {
     showIn: ["premium"],
   },
   {
-    id: "hosting",
-    label: "Hébergement prolongé de la page (1 mois)",
+    id: "hosting_premium",
+    label: "Hébergement 1 an après l'événement",
     showIn: ["premium"],
   },
   {
     id: "privacy",
     label: "Confidentialité activée par défaut",
     showIn: ["decouverte", "classique", "premium"],
+  },
+  {
+    id: "extensions",
+    label: "Extensions d'hébergement disponibles (+6 mois / +1 an)",
+    info: "Prolongez l'accès à votre page selon vos besoins après la période incluse.",
+    showIn: ["premium"],
   },
 ];
 
@@ -166,7 +177,6 @@ function PlanCard({ plan }: { plan: Plan }) {
           headerBg: "bg-gradient-to-br from-or to-amber-500 text-white",
           cta: "btn bg-or hover:bg-amber-600 text-white font-bold",
           chip: "bg-white/90 text-encre font-bold",
-          badge: "absolute top-3 right-3",
         }
       : plan.key === "premium"
       ? {
@@ -174,14 +184,12 @@ function PlanCard({ plan }: { plan: Plan }) {
           headerBg: "bg-gradient-to-br from-gray-800 to-gray-900 text-white",
           cta: "btn bg-gray-800 hover:bg-gray-900 text-white font-bold",
           chip: "bg-white/90 text-encre font-bold",
-          badge: "absolute top-3 right-3",
         }
       : {
           card: "card hover:shadow-lg transition-all duration-300 border-2 border-gray-300",
           headerBg: "bg-white text-encre border-b-2 border-gray-200",
           cta: "btn btn-outline border-2 hover:bg-gray-800 hover:text-white font-bold",
           chip: "bg-gray-100 text-gray-700 font-bold",
-          badge: "",
         };
 
   const saving =
@@ -198,26 +206,36 @@ function PlanCard({ plan }: { plan: Plan }) {
       itemScope 
       itemType="https://schema.org/Offer"
     >
-      {/* Header avec hauteur fixe */}
-      <header className={`${tone.headerBg} px-6 py-5 relative min-h-[140px]`}>
+      {/* Header avec hauteur fixe et layout amélioré */}
+      <header className={`${tone.headerBg} px-4 sm:px-6 py-5 relative min-h-[160px] flex flex-col`}>
+        {/* Badge en position absolue en haut à droite */}
         {plan.highlight && (
-          <div className={tone.badge}>
+          <div className="absolute top-3 right-3">
             <Badge type={plan.highlight} />
           </div>
         )}
         
-        <div>
-          <h3 className="font-title text-2xl leading-7" itemProp="name">{plan.title}</h3>
-          <p className="mt-1 text-sm/5 opacity-95" itemProp="description">{plan.pitch}</p>
+        {/* Titre et description avec padding pour éviter chevauchement */}
+        <div className="flex-grow">
+          <h3 className="font-title text-xl sm:text-2xl leading-tight pr-20 sm:pr-24" itemProp="name">
+            {plan.title}
+          </h3>
+          <p className="mt-1 text-xs sm:text-sm opacity-95 pr-16 sm:pr-20" itemProp="description">
+            {plan.pitch}
+          </p>
+          {plan.badgeNote && plan.key === "premium" && (
+            <p className="text-[10px] sm:text-xs opacity-90 mt-1">{plan.badgeNote}</p>
+          )}
         </div>
 
-        <div className="mt-3 flex items-baseline gap-2">
-          <div className="text-3xl font-bold">{plan.price}</div>
+        {/* Prix et économie - toujours en bas */}
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <div className="text-2xl sm:text-3xl font-bold">{plan.price}</div>
           {plan.strike && (
-            <div className="text-sm/5 opacity-70 line-through">{plan.strike}</div>
+            <div className="text-xs sm:text-sm opacity-70 line-through">{plan.strike}</div>
           )}
           {saving && (
-            <span className={`text-xs px-2 py-0.5 rounded ${tone.chip}`}>
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded ${tone.chip}`}>
               {saving}
             </span>
           )}

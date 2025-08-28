@@ -1,4 +1,3 @@
-// components/AddOnsMatrix.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -30,13 +29,11 @@ function InfoTip({ text }: { text: string }) {
     const recalc = () => {
       const r = anchorRef.current?.getBoundingClientRect();
       if (!r) return;
-      const TW = 256;
-      const GAP = 8;
+      const TW = 256, GAP = 8;
 
       let left = r.right - TW;
       if (left < 12) left = 12;
-      if (left + TW > window.innerWidth - 12)
-        left = window.innerWidth - 12 - TW;
+      if (left + TW > window.innerWidth - 12) left = window.innerWidth - 12 - TW;
 
       const top = r.bottom + GAP;
       setPos({ top, left });
@@ -80,44 +77,14 @@ function InfoTip({ text }: { text: string }) {
   );
 }
 
-/* Add-ons alignés avec le design system */
+/* Add-ons */
 const ADDONS: AddOn[] = [
-  {
-    id: "photobooth",
-    label: "Web Photobooth",
-    info: "Appareil photo dans le navigateur. Les invités posent avec leur smartphone et envoient directement dans la galerie privée.",
-    availability: { decouverte: "none", classique: "option", premium: "option" },
-  },
-  {
-    id: "videobooth",
-    label: "Video Guestbook",
-    info: "Courts témoignages vidéo capturés sur smartphone. Envoi automatique vers la page privée.",
-    availability: { decouverte: "none", classique: "option", premium: "option" },
-  },
-  {
-    id: "moderation",
-    label: "Modération et tri",
-    info: "Dédoublonnage, rotation, suppression des flous. Galerie finale propre et agréable à regarder.",
-    availability: { decouverte: "none", classique: "option", premium: "included" },
-  },
-  {
-    id: "hosting",
-    label: "Hébergement prolongé (1 mois)",
-    info: "Garder la page active après l'événement pour partager sereinement.",
-    availability: { decouverte: "none", classique: "option", premium: "included" },
-  },
-  {
-    id: "customUrl",
-    label: "Adresse web personnalisée",
-    info: "Ex : memoriabox.fr/votre-evenement",
-    availability: { decouverte: "none", classique: "option", premium: "included" },
-  },
-  {
-    id: "supportJ",
-    label: "Support prioritaire le jour J",
-    info: "Canal prioritaire email + chat, réponse accélérée.",
-    availability: { decouverte: "none", classique: "option", premium: "included" },
-  },
+  { id: "photobooth", label: "Web Photobooth", info: "Appareil photo dans le navigateur. Les invités posent avec leur smartphone et envoient directement dans la galerie privée.", availability: { decouverte: "none", classique: "option", premium: "option" } },
+  { id: "videobooth", label: "Video Guestbook", info: "Courts témoignages vidéo capturés sur smartphone. Envoi automatique vers la page privée.", availability: { decouverte: "none", classique: "option", premium: "option" } },
+  { id: "download_hd", label: "Export ZIP haute définition", info: "Téléchargement de toutes les photos et vidéos en qualité originale en un seul fichier.", availability: { decouverte: "option", classique: "option", premium: "included" } },
+  { id: "hosting_extra", label: "Extension hébergement après la période incluse", info: "+6 mois ou +1 an selon vos besoins. Parfait si vous voulez partager plus longtemps.", availability: { decouverte: "option", classique: "option", premium: "option" } },
+  { id: "album_print", label: "Album photo imprimé", info: "Création et impression d'un album souvenir professionnel avec vos meilleures photos.", availability: { decouverte: "none", classique: "option", premium: "option" } },
+  { id: "video_montage", label: "Montage vidéo souvenir", info: "Compilation professionnelle des meilleurs moments en une vidéo de 3-5 minutes.", availability: { decouverte: "none", classique: "option", premium: "option" } },
 ];
 
 function Cell({ value }: { value: Availability }) {
@@ -149,7 +116,7 @@ export default function AddOnsMatrix() {
   return (
     <section aria-label="Options complémentaires" className="not-prose max-w-5xl mx-auto">
       {/* Desktop */}
-      <div className="hidden md:block card overflow-hidden mx-auto">
+      <div className="hidden md:block rounded-2xl overflow-hidden shadow-sm">
         <div className="grid [grid-template-columns:minmax(220px,1.35fr)_1fr_1fr_1fr] bg-gradient-to-r from-encre to-gray-800 text-xs text-white">
           <div className="px-6 py-4 font-semibold text-left">Option</div>
           <div className="px-4 py-4 text-center">
@@ -173,22 +140,16 @@ export default function AddOnsMatrix() {
               className={[
                 "grid [grid-template-columns:minmax(220px,1.35fr)_1fr_1fr_1fr] items-center",
                 idx % 2 === 0 ? "bg-white" : "bg-gray-50",
-                "hover:bg-beige/20 transition-colors",
+                "transition-colors hover:bg-beige/20",
               ].join(" ")}
             >
               <div className="px-6 py-3 text-[15px] text-encre">
                 <span className="font-semibold">{a.label}</span>
                 {a.info && <InfoTip text={a.info} />}
               </div>
-              <div className="px-4 py-3">
-                <Cell value={a.availability.decouverte} />
-              </div>
-              <div className="px-4 py-3">
-                <Cell value={a.availability.classique} />
-              </div>
-              <div className="px-4 py-3">
-                <Cell value={a.availability.premium} />
-              </div>
+              <div className="px-4 py-3"><Cell value={a.availability.decouverte} /></div>
+              <div className="px-4 py-3"><Cell value={a.availability.classique} /></div>
+              <div className="px-4 py-3"><Cell value={a.availability.premium} /></div>
             </li>
           ))}
         </ul>
@@ -208,28 +169,21 @@ export default function AddOnsMatrix() {
             <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
               <div className="rounded-lg bg-gray-50 p-2">
                 <div className="font-medium text-gray-700">Découverte</div>
-                <div className="mt-1">
-                  <Cell value={a.availability.decouverte} />
-                </div>
+                <div className="mt-1"><Cell value={a.availability.decouverte} /></div>
               </div>
               <div className="rounded-lg bg-rosepale/30 p-2">
                 <div className="font-medium text-encre">Classique</div>
-                <div className="mt-1">
-                  <Cell value={a.availability.classique} />
-                </div>
+                <div className="mt-1"><Cell value={a.availability.classique} /></div>
               </div>
               <div className="rounded-lg bg-beige/30 p-2">
                 <div className="font-medium text-encre">Premium</div>
-                <div className="mt-1">
-                  <Cell value={a.availability.premium} />
-                </div>
+                <div className="mt-1"><Cell value={a.availability.premium} /></div>
               </div>
             </div>
           </div>
         ))}
-
         <p className="text-[11px] text-gray-600 text-center">
-          Aucune application requise. Le QR code ouvre la page privée sur smartphone.
+          Aucune application requise : QR code ou lien privé suffit.
         </p>
       </div>
     </section>
