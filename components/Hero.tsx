@@ -3,56 +3,49 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { 
-  ArrowRight, 
-  QrCode, 
-  Smartphone, 
+import {
+  ArrowRight,
+  QrCode,
+  Smartphone,
   Download,
   CheckCircle2,
-  ChevronDown 
+  ChevronDown,
 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export default function Hero() {
-  // === MOTS ANIMÉS ===
+  /* ===== Machine à écrire (inchangé) ===== */
   const WORDS = ["mariage", "anniversaire", "baptême", "soirée", "événement"];
-  const DYNAMIC_PREFIX = "votre\u00A0"; // "votre " (espace insécable) pour la mesure
-
-  // === ÉTAT MACHINE À ÉCRIRE ===
+  const DYNAMIC_PREFIX = "votre\u00A0";
   const [i, setI] = useState(0);
   const [sub, setSub] = useState(0);
   const [del, setDel] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-
-  // === TIMINGS IDENTIQUES À L'ANCIENNE VERSION ===
   const TOTAL_MS = 3200;
   const PAUSE_FULL_MS = 2750;
   const PAUSE_EMPTY_MS = 450;
   const stepMs = Math.max(
     50,
     Math.floor(
-      (TOTAL_MS - (PAUSE_FULL_MS + PAUSE_EMPTY_MS)) / (2 * Math.max(1, WORDS[i].length))
+      (TOTAL_MS - (PAUSE_FULL_MS + PAUSE_EMPTY_MS)) /
+        (2 * Math.max(1, WORDS[i].length))
     )
   );
 
-  // === LOGIQUE TYPEWRITER ===
   useEffect(() => {
     const fullLen = WORDS[i].length;
     let t: number;
-
     if (!del) {
       setIsTyping(true);
-      if (sub < fullLen) {
-        t = window.setTimeout(() => setSub((s) => s + 1), stepMs);
-      } else {
+      if (sub < fullLen) t = window.setTimeout(() => setSub((s) => s + 1), stepMs);
+      else {
         setIsTyping(false);
         t = window.setTimeout(() => setDel(true), PAUSE_FULL_MS);
       }
     } else {
       setIsTyping(true);
-      if (sub > 0) {
-        t = window.setTimeout(() => setSub((s) => s - 1), stepMs);
-      } else {
+      if (sub > 0) t = window.setTimeout(() => setSub((s) => s - 1), stepMs);
+      else {
         setIsTyping(false);
         t = window.setTimeout(() => {
           setDel(false);
@@ -60,11 +53,10 @@ export default function Hero() {
         }, PAUSE_EMPTY_MS);
       }
     }
-
     return () => clearTimeout(t);
   }, [sub, del, i, stepMs]);
 
-  // === MESURES (hauteur mobile + largeur desktop) ===
+  /* ===== Mesures (zone du mot animé) ===== */
   const h1Ref = useRef<HTMLHeadingElement>(null);
   const measureWrapRef = useRef<HTMLSpanElement>(null);
   const measureNowrapRef = useRef<HTMLSpanElement>(null);
@@ -75,13 +67,11 @@ export default function Hero() {
 
   const doMeasure = () => {
     const h1W = h1Ref.current?.getBoundingClientRect().width ?? 0;
-
     if (measureWrapRef.current) {
       measureWrapRef.current.style.width = h1W ? `${h1W}px` : "auto";
     }
     const hRect = measureWrapRef.current?.getBoundingClientRect();
     const wRect = measureNowrapRef.current?.getBoundingClientRect();
-
     setBox({
       w: Math.ceil((wRect?.width ?? 0) + 4),
       h: Math.ceil(hRect?.height ?? 0),
@@ -95,168 +85,184 @@ export default function Hero() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // === ANIMATIONS ===
-  const container = { 
-    hidden: { opacity: 0 }, 
-    visible: { 
-      opacity: 1, 
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 } 
-    } 
+  /* ===== Animations ===== */
+  const container = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
   };
-  
-  const item = { 
-    hidden: { opacity: 0, y: 20 }, 
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 0.6, ease: [0.25, 0.8, 0.25, 1] } 
-    } 
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.8, 0.25, 1] } },
   };
 
   const features = [
-    {
-      icon: QrCode,
-      title: "Page web dédiée",
-      desc: "URL personnalisée pour votre événement"
-    },
-    {
-      icon: Smartphone,
-      title: "Sans app ni compte",
-      desc: "Les invités partagent en 2 clics"
-    },
-    {
-      icon: Download,
-      title: "Tout centralisé",
-      desc: "Photos et vidéos dans votre espace privé"
-    }
+    { icon: QrCode, title: "Page web dédiée", desc: "URL personnalisée pour votre événement" },
+    { icon: Smartphone, title: "Sans app ni compte", desc: "Les invités partagent en 2 clics" },
+    { icon: Download, title: "Tout centralisé", desc: "Photos et vidéos dans votre espace privé" },
   ];
 
+  /* ===== Chevron visible tant que le Hero est à l'écran ===== */
+  const heroRef = useRef<HTMLElement>(null);
+  const [heroInView, setHeroInView] = useState(true);
+
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => setHeroInView(entries[0].isIntersecting),
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  /* ===== Rendu ===== */
   return (
     <section
-      className="relative isolate flex flex-col justify-center py-12 lg:py-20 overflow-x-hidden"
-      style={{ minHeight: "calc(100vh - 140px)" }}
+      ref={heroRef}
+      className="relative isolate overflow-hidden"
       aria-label="Présentation de MemoriaBox"
     >
-      <div className="container-max">
-        <motion.div 
-          variants={container} 
-          initial="hidden" 
-          animate="visible" 
-          className="mx-auto max-w-5xl text-center"
-        >
-          {/* H1 avec typewriter */}
-          <motion.h1
-            ref={h1Ref}
-            variants={item}
-            className="font-title text-4xl lg:text-6xl mb-6 text-encre leading-tight mx-auto max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch] text-center"
-          >
-            Collectez tous les souvenirs de{" "}
-            <span
-              className="relative block mx-auto text-center whitespace-normal break-words sm:inline-flex sm:justify-center sm:whitespace-nowrap sm:break-normal sm:text-center align-baseline"
-              style={{
-                height: box.h ? `${box.h}px` : undefined,
-                width: box.w ? `${box.w}px` : undefined,
-                verticalAlign: "baseline",
-                maxWidth: "100%",
-              }}
+      {/* Occupation plein écran + espace bas réservé (évite tout chevauchement) */}
+      <div className="min-h-[100vh] grid grid-rows-[1fr_auto]">
+        {/* --- Contenu principal --- */}
+        <div className="flex flex-col justify-center py-8 sm:py-12 lg:py-16">
+          <div className="container-max">
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="visible"
+              className="mx-auto max-w-5xl text-center px-4"
             >
-              <span className="font-medium">
-                <span className="text-encre">votre&nbsp;</span>
-                <span className="text-or">
-                  {WORDS[i].slice(0, sub)}
-                  <span
-                    aria-hidden
-                    className={`inline-block align-baseline ml-1 caret-enhanced ${isTyping ? "caret-typing" : ""}`}
-                  />
-                </span>
-              </span>
-            </span>
-          </motion.h1>
-
-          {/* Sous-titre plus précis */}
-          <motion.p 
-            variants={item} 
-            className="text-lg lg:text-xl text-gray-700 mb-3 max-w-3xl mx-auto leading-relaxed"
-          >
-            Créez une <strong className="text-encre">page privée en ligne</strong> où vos invités 
-            envoient leurs photos et vidéos <strong className="text-encre">sans app ni inscription</strong>
-          </motion.p>
-
-          {/* Proposition de valeur ultra-claire */}
-          <motion.div 
-            variants={item}
-            className="mb-10"
-          >
-            <p className="text-base text-gray-600 max-w-2xl mx-auto">
-              Fini les clés USB, groupes WhatsApp et Google Drive éparpillés. 
-              Tout arrive automatiquement dans votre espace sécurisé.
-            </p>
-          </motion.div>
-
-          {/* 3 points clés visuels */}
-          <motion.div 
-            variants={item}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-10"
-          >
-            {features.map((feature, idx) => {
-              const Icon = feature.icon;
-              return (
-                <div 
-                  key={idx} 
-                  className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-100 shadow-sm"
+              {/* Titre */}
+              <motion.h1
+                ref={h1Ref}
+                variants={item}
+                className="font-title text-[28px] leading-[1.2] sm:text-4xl lg:text-6xl mb-5 text-encre mx-auto max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch]"
+              >
+                Collectez tous les souvenirs de{" "}
+                <span
+                  className="relative block mx-auto whitespace-normal break-words sm:inline-flex sm:justify-center sm:whitespace-nowrap sm:break-normal"
+                  style={{
+                    height: box.h ? `${box.h}px` : undefined,
+                    width: box.w ? `${box.w}px` : undefined,
+                    verticalAlign: "baseline",
+                    maxWidth: "100%",
+                  }}
                 >
-                  <Icon className="w-8 h-8 text-or mx-auto mb-2" />
-                  <p className="font-semibold text-sm text-encre">{feature.title}</p>
-                  <p className="text-xs text-gray-600 mt-1">{feature.desc}</p>
-                </div>
-              );
-            })}
-          </motion.div>
+                  <span className="font-medium">
+                    <span className="text-encre">votre&nbsp;</span>
+                    <span className="text-or">
+                      {WORDS[i].slice(0, sub)}
+                      <span
+                        aria-hidden
+                        className={`inline-block align-baseline ml-1 caret-enhanced ${
+                          isTyping ? "caret-typing" : ""
+                        }`}
+                      />
+                    </span>
+                  </span>
+                </span>
+              </motion.h1>
 
-          {/* CTAs */}
-          <motion.div 
-            variants={item} 
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-          >
-            <Link href="/demo" className="btn btn-primary group">
-              Voir une démo
-              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link href="/fonctionnalites" className="btn btn-outline">
-              Comment ça marche ?
-            </Link>
-          </motion.div>
+              {/* Sous-titre */}
+              <motion.p
+                variants={item}
+                className="text-base sm:text-lg lg:text-xl text-gray-700 mb-3 max-w-3xl mx-auto leading-relaxed"
+              >
+                Créez une <strong className="text-encre">page privée en ligne</strong> où vos invités
+                envoient leurs photos et vidéos <strong className="text-encre">sans app ni inscription</strong>
+              </motion.p>
 
-          {/* Points de réassurance */}
-          <motion.div 
-            variants={item}
-            className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-gray-600"
-          >
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              QR code inclus
-            </span>
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              100% privé et sécurisé
-            </span>
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              Export HD disponible
-            </span>
-          </motion.div>
-        </motion.div>
+              {/* Proposition de valeur */}
+              <motion.div variants={item} className="mb-8 sm:mb-10">
+                <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+                  Fini les clés USB, groupes WhatsApp et Google Drive éparpillés.
+                  Tout arrive automatiquement dans votre espace sécurisé.
+                </p>
+              </motion.div>
+
+              {/* 3 points clés */}
+              <motion.div
+                variants={item}
+                className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto mb-8 sm:mb-10"
+              >
+                {features.map((feature, idx) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-white/85 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm"
+                    >
+                      <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-or mx-auto mb-2" />
+                      <p className="font-semibold text-[13px] sm:text-sm text-encre">
+                        {feature.title}
+                      </p>
+                      <p className="text-[11px] sm:text-xs text-gray-600 mt-1">{feature.desc}</p>
+                    </div>
+                  );
+                })}
+              </motion.div>
+
+              {/* CTAs */}
+              <motion.div
+                variants={item}
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
+              >
+                <Link href="/demo" className="btn btn-primary group">
+                  Voir une démo
+                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link href="/fonctionnalites" className="btn btn-outline">
+                  Comment ça marche ?
+                </Link>
+              </motion.div>
+
+              {/* Réassurance */}
+              <motion.div
+                variants={item}
+                className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3 text-[12px] sm:text-sm text-gray-600"
+              >
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  QR code inclus
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  100% privé et sécurisé
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  Export HD disponible
+                </span>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* --- Espace bas + chevron fixé à l'écran quand le Hero est visible --- */}
+        <div className="relative">
+          <div className="h-16 sm:h-20" />
+        </div>
       </div>
 
-      {/* Indicateur scroll */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-        <ChevronDown className="w-8 h-8 text-or animate-bounce" />
-      </div>
+      {/* Chevron global fixé fenêtre + fond dégradé, visible tant que le Hero est à l’écran */}
+      <motion.div
+        aria-hidden
+        className="fixed inset-x-0 bottom-3 sm:bottom-4 z-40 flex justify-center pointer-events-none"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: heroInView ? 1 : 0, y: heroInView ? 0 : 8 }}
+        transition={{ duration: 0.25 }}
+      >
+        {/* Plaque dégradée pour lisibilité sur tous fonds */}
+        <div className="absolute inset-x-0 -bottom-1 h-14 sm:h-16 bg-gradient-to-t from-white/95 via-white/80 to-transparent" />
+        <ChevronDown className="relative w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-or animate-bounce" />
+      </motion.div>
 
       {/* Mesures invisibles */}
       <span
         ref={measureWrapRef}
-        className="absolute -z-50 pointer-events-none opacity-0 block whitespace-normal break-words font-title text-4xl lg:text-6xl leading-tight font-medium max-w-full"
+        className="absolute -z-50 pointer-events-none opacity-0 block whitespace-normal break-words font-title text-[28px] sm:text-4xl lg:text-6xl leading-tight font-medium max-w-full"
         style={{ left: -9999, top: 0 }}
         aria-hidden
       >
@@ -264,7 +270,7 @@ export default function Hero() {
       </span>
       <span
         ref={measureNowrapRef}
-        className="absolute -z-50 pointer-events-none opacity-0 whitespace-nowrap font-title text-4xl lg:text-6xl leading-tight font-medium max-w-full"
+        className="absolute -z-50 pointer-events-none opacity-0 whitespace-nowrap font-title text-[28px] sm:text-4xl lg:text-6xl leading-tight font-medium max-w-full"
         style={{ left: -9999, top: 0 }}
         aria-hidden
       >
@@ -273,25 +279,25 @@ export default function Hero() {
 
       {/* Styles caret */}
       <style jsx>{`
-        .caret-enhanced { 
-          width: 2px; 
-          height: 1.1em; 
-          background: linear-gradient(to bottom, #d4af37, #b8941f); 
-          animation: caretBlink 1.2s step-end infinite; 
-          border-radius: 1px; 
-          box-shadow: 0 0 4px rgba(212, 175, 55, 0.3); 
+        .caret-enhanced {
+          width: 2px;
+          height: 1.1em;
+          background: linear-gradient(to bottom, #d4af37, #b8941f);
+          animation: caretBlink 1.2s step-end infinite;
+          border-radius: 1px;
+          box-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
         }
-        .caret-typing { 
-          animation: caretTyping 0.8s ease-in-out infinite; 
-          box-shadow: 0 0 8px rgba(212, 175, 55, 0.5); 
+        .caret-typing {
+          animation: caretTyping 0.8s ease-in-out infinite;
+          box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
         }
-        @keyframes caretBlink { 
-          0%, 50% { opacity: 1; } 
-          51%, 100% { opacity: 0; } 
+        @keyframes caretBlink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0; }
         }
-        @keyframes caretTyping { 
-          0%, 100% { opacity: 1; transform: scaleY(1); } 
-          50% { opacity: 0.7; transform: scaleY(0.9); } 
+        @keyframes caretTyping {
+          0%, 100% { opacity: 1; transform: scaleY(1); }
+          50% { opacity: 0.7; transform: scaleY(0.9); }
         }
       `}</style>
     </section>
