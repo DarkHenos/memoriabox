@@ -14,13 +14,15 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export default function Hero() {
-  /* ===== Machine à écrire (inchangé) ===== */
+  /* ===== Machine à écrire (inchangée) ===== */
   const WORDS = ["mariage", "anniversaire", "baptême", "soirée", "événement"];
   const DYNAMIC_PREFIX = "votre\u00A0";
+
   const [i, setI] = useState(0);
   const [sub, setSub] = useState(0);
   const [del, setDel] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+
   const TOTAL_MS = 3200;
   const PAUSE_FULL_MS = 2750;
   const PAUSE_EMPTY_MS = 450;
@@ -35,6 +37,7 @@ export default function Hero() {
   useEffect(() => {
     const fullLen = WORDS[i].length;
     let t: number;
+
     if (!del) {
       setIsTyping(true);
       if (sub < fullLen) t = window.setTimeout(() => setSub((s) => s + 1), stepMs);
@@ -56,7 +59,7 @@ export default function Hero() {
     return () => clearTimeout(t);
   }, [sub, del, i, stepMs]);
 
-  /* ===== Mesures (zone du mot animé) ===== */
+  /* ===== Mesures (pour la zone du mot animé) ===== */
   const h1Ref = useRef<HTMLHeadingElement>(null);
   const measureWrapRef = useRef<HTMLSpanElement>(null);
   const measureNowrapRef = useRef<HTMLSpanElement>(null);
@@ -101,163 +104,151 @@ export default function Hero() {
     { icon: Download, title: "Tout centralisé", desc: "Photos et vidéos dans votre espace privé" },
   ];
 
-  /* ===== Chevron visible tant que le Hero est à l'écran ===== */
-  const heroRef = useRef<HTMLElement>(null);
-  const [heroInView, setHeroInView] = useState(true);
-
+  /* ===== Chevron mobile : fixed + hide on scroll ===== */
+  const [showChevron, setShowChevron] = useState(true);
   useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      (entries) => setHeroInView(entries[0].isIntersecting),
-      { threshold: 0.15 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
+    const onScroll = () => setShowChevron(window.scrollY < 60);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ===== Rendu ===== */
   return (
     <section
-      ref={heroRef}
-      className="relative isolate overflow-hidden"
+      className="relative isolate flex flex-col justify-center py-8 pb-20 sm:pb-10 lg:py-20 overflow-hidden"
+      style={{ minHeight: "calc(100vh - 120px)" }}
       aria-label="Présentation de MemoriaBox"
     >
-      {/* Occupation plein écran + espace bas réservé (évite tout chevauchement) */}
-      <div className="min-h-[100vh] grid grid-rows-[1fr_auto]">
-        {/* --- Contenu principal --- */}
-        <div className="flex flex-col justify-center py-8 sm:py-12 lg:py-16">
-          <div className="container-max">
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="visible"
-              className="mx-auto max-w-5xl text-center px-4"
+      <div className="container-max">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="visible"
+          className="mx-auto max-w-5xl text-center"
+        >
+          {/* Titre */}
+          <motion.h1
+            ref={h1Ref}
+            variants={item}
+            className="font-title text-[28px] leading-[1.2] sm:text-4xl lg:text-6xl mb-5 text-encre mx-auto max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch]"
+          >
+            Collectez tous les souvenirs de{" "}
+            <span
+              className="relative block mx-auto whitespace-normal break-words sm:inline-flex sm:justify-center sm:whitespace-nowrap sm:break-normal"
+              style={{
+                height: box.h ? `${box.h}px` : undefined,
+                width: box.w ? `${box.w}px` : undefined,
+                verticalAlign: "baseline",
+                maxWidth: "100%",
+              }}
             >
-              {/* Titre */}
-              <motion.h1
-                ref={h1Ref}
-                variants={item}
-                className="font-title text-[28px] leading-[1.2] sm:text-4xl lg:text-6xl mb-5 text-encre mx-auto max-w-[22ch] sm:max-w-[28ch] lg:max-w-[34ch]"
-              >
-                Collectez tous les souvenirs de{" "}
-                <span
-                  className="relative block mx-auto whitespace-normal break-words sm:inline-flex sm:justify-center sm:whitespace-nowrap sm:break-normal"
-                  style={{
-                    height: box.h ? `${box.h}px` : undefined,
-                    width: box.w ? `${box.w}px` : undefined,
-                    verticalAlign: "baseline",
-                    maxWidth: "100%",
-                  }}
+              <span className="font-medium">
+                <span className="text-encre">votre&nbsp;</span>
+                <span className="text-or">
+                  {WORDS[i].slice(0, sub)}
+                  <span
+                    aria-hidden
+                    className={`inline-block align-baseline ml-1 caret-enhanced ${isTyping ? "caret-typing" : ""}`}
+                  />
+                </span>
+              </span>
+            </span>
+          </motion.h1>
+
+          {/* Sous-titre */}
+          <motion.p
+            variants={item}
+            className="text-base sm:text-lg lg:text-xl text-gray-700 mb-3 max-w-3xl mx-auto leading-relaxed"
+          >
+            Créez une <strong className="text-encre">page privée en ligne</strong> où vos invités
+            envoient leurs photos et vidéos <strong className="text-encre">sans app ni inscription</strong>
+          </motion.p>
+
+          {/* Proposition de valeur */}
+          <motion.div variants={item} className="mb-8 sm:mb-10">
+            <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+              Fini les clés USB, groupes WhatsApp et Google Drive éparpillés.
+              Tout arrive automatiquement dans votre espace sécurisé.
+            </p>
+          </motion.div>
+
+          {/* 3 points clés */}
+          <motion.div
+            variants={item}
+            className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto mb-8 sm:mb-10"
+          >
+            {features.map((feature, idx) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white/85 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm"
                 >
-                  <span className="font-medium">
-                    <span className="text-encre">votre&nbsp;</span>
-                    <span className="text-or">
-                      {WORDS[i].slice(0, sub)}
-                      <span
-                        aria-hidden
-                        className={`inline-block align-baseline ml-1 caret-enhanced ${
-                          isTyping ? "caret-typing" : ""
-                        }`}
-                      />
-                    </span>
-                  </span>
-                </span>
-              </motion.h1>
+                  <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-or mx-auto mb-2" />
+                  <p className="font-semibold text-[13px] sm:text-sm text-encre">{feature.title}</p>
+                  <p className="text-[11px] sm:text-xs text-gray-600 mt-1">{feature.desc}</p>
+                </div>
+              );
+            })}
+          </motion.div>
 
-              {/* Sous-titre */}
-              <motion.p
-                variants={item}
-                className="text-base sm:text-lg lg:text-xl text-gray-700 mb-3 max-w-3xl mx-auto leading-relaxed"
-              >
-                Créez une <strong className="text-encre">page privée en ligne</strong> où vos invités
-                envoient leurs photos et vidéos <strong className="text-encre">sans app ni inscription</strong>
-              </motion.p>
+          {/* CTAs */}
+          <motion.div variants={item} className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Link href="/demo" className="btn btn-primary group">
+              Voir une démo
+              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link href="/fonctionnalites" className="btn btn-outline">
+              Comment ça marche ?
+            </Link>
+          </motion.div>
 
-              {/* Proposition de valeur */}
-              <motion.div variants={item} className="mb-8 sm:mb-10">
-                <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-                  Fini les clés USB, groupes WhatsApp et Google Drive éparpillés.
-                  Tout arrive automatiquement dans votre espace sécurisé.
-                </p>
-              </motion.div>
-
-              {/* 3 points clés */}
-              <motion.div
-                variants={item}
-                className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto mb-8 sm:mb-10"
-              >
-                {features.map((feature, idx) => {
-                  const Icon = feature.icon;
-                  return (
-                    <div
-                      key={idx}
-                      className="bg-white/85 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-100 shadow-sm"
-                    >
-                      <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-or mx-auto mb-2" />
-                      <p className="font-semibold text-[13px] sm:text-sm text-encre">
-                        {feature.title}
-                      </p>
-                      <p className="text-[11px] sm:text-xs text-gray-600 mt-1">{feature.desc}</p>
-                    </div>
-                  );
-                })}
-              </motion.div>
-
-              {/* CTAs */}
-              <motion.div
-                variants={item}
-                className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center"
-              >
-                <Link href="/demo" className="btn btn-primary group">
-                  Voir une démo
-                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-                <Link href="/fonctionnalites" className="btn btn-outline">
-                  Comment ça marche ?
-                </Link>
-              </motion.div>
-
-              {/* Réassurance */}
-              <motion.div
-                variants={item}
-                className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3 text-[12px] sm:text-sm text-gray-600"
-              >
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  QR code inclus
-                </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  100% privé et sécurisé
-                </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  Export HD disponible
-                </span>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* --- Espace bas + chevron fixé à l'écran quand le Hero est visible --- */}
-        <div className="relative">
-          <div className="h-16 sm:h-20" />
-        </div>
+          {/* Réassurance */}
+          <motion.div
+            variants={item}
+            className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3 text-[12px] sm:text-sm text-gray-600"
+          >
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              QR code inclus
+            </span>
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              100% privé et sécurisé
+            </span>
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              Export HD disponible
+            </span>
+          </motion.div>
+        </motion.div>
       </div>
 
-      {/* Chevron global fixé fenêtre + fond dégradé, visible tant que le Hero est à l’écran */}
-      <motion.div
-        aria-hidden
-        className="fixed inset-x-0 bottom-3 sm:bottom-4 z-40 flex justify-center pointer-events-none"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: heroInView ? 1 : 0, y: heroInView ? 0 : 8 }}
-        transition={{ duration: 0.25 }}
-      >
-        {/* Plaque dégradée pour lisibilité sur tous fonds */}
-        <div className="absolute inset-x-0 -bottom-1 h-14 sm:h-16 bg-gradient-to-t from-white/95 via-white/80 to-transparent" />
-        <ChevronDown className="relative w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-or animate-bounce" />
-      </motion.div>
+      {/* Scroll hint – ovale doux + chevron flottant */}
+{showChevron && (
+  <div className="fixed inset-x-0 bottom-0 z-40 pointer-events-none flex justify-center">
+    <div className="relative w-full max-w-[520px] h-20">
+      {/* Halo ovoïdal très subtil */}
+      <div
+        className="absolute inset-0 rounded-t-[999px] blur-2xl"
+        style={{
+          background:
+            'radial-gradient(120% 140% at 50% 95%, rgba(243,244,246,0.95) 0%, rgba(243,244,246,0.72) 40%, rgba(243,244,246,0.38) 70%, rgba(243,244,246,0) 100%)',
+          boxShadow: '0 -8px 24px rgba(2,6,23,0.06)',
+          WebkitMaskImage:
+            'radial-gradient(110% 120% at 50% 100%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)',
+          maskImage:
+            'radial-gradient(110% 120% at 50% 100%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)',
+        }}
+      />
+      {/* Chevron centré */}
+      <div className="absolute inset-x-0 bottom-4 flex justify-center">
+      <ChevronDown className="w-6 h-6 text-amber-600 animate-float" />
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Mesures invisibles */}
       <span
@@ -277,29 +268,43 @@ export default function Hero() {
         {LONGEST_DYNAMIC}
       </span>
 
-      {/* Styles caret */}
-      <style jsx>{`
-        .caret-enhanced {
-          width: 2px;
-          height: 1.1em;
-          background: linear-gradient(to bottom, #d4af37, #b8941f);
-          animation: caretBlink 1.2s step-end infinite;
-          border-radius: 1px;
-          box-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
-        }
-        .caret-typing {
-          animation: caretTyping 0.8s ease-in-out infinite;
-          box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
-        }
-        @keyframes caretBlink {
-          0%, 50% { opacity: 1; }
-          51%, 100% { opacity: 0; }
-        }
-        @keyframes caretTyping {
-          0%, 100% { opacity: 1; transform: scaleY(1); }
-          50% { opacity: 0.7; transform: scaleY(0.9); }
-        }
-      `}</style>
+     {/* Styles caret + chevron */}
+<style jsx>{`
+  .caret-enhanced {
+    width: 2px;
+    height: 1.1em;
+    background: linear-gradient(to bottom, #d4af37, #b8941f);
+    animation: caretBlink 1.2s step-end infinite;
+    border-radius: 1px;
+    box-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
+  }
+  .caret-typing {
+    animation: caretTyping 0.8s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+  }
+
+  @keyframes caretBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+  @keyframes caretTyping {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50%      { opacity: 0.7; transform: scaleY(0.9); }
+  }
+
+  /* Animation chevron flottant */
+  .animate-float {
+    animation: float 2.6s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50%      { transform: translateY(4px); opacity: .92; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float { animation: none !important; }
+  }
+`}</style>
+
     </section>
   );
 }
